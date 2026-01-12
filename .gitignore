@@ -1,0 +1,6 @@
+*.exe
+include/
+lib/
+*.ini
+res/objects/earth/*.glb
+res/objects/lamp/*.glb

@@ -1,0 +1,47 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe build active file",
+            "command": "C:/msys64/mingw64/bin/g++.exe",
+            "args": [
+                "-g",
+                "-std=c++17",
+                "-I${workspaceFolder}/include",
+                "-L${workspaceFolder}/lib",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/glad.c",
+                "${workspaceFolder}/src/vendor/stb_image/stb_image.cpp",
+                "${workspaceFolder}/imgui/*.cpp",
+                "${workspaceFolder}/src/Shader/*.cpp",
+                "${workspaceFolder}/src/Texture/*.cpp",
+                "${workspaceFolder}/src/Camera/*.cpp",
+                "${workspaceFolder}/src/Mesh/*.cpp",
+                "${workspaceFolder}/src/Model/*.cpp",
+                "${workspaceFolder}/src/Object/*.cpp",
+                "${workspaceFolder}/src/Window/*.cpp",
+                "${workspaceFolder}/src/Input/*.cpp",
+                "${workspaceFolder}/src/Scene/*.cpp",
+                "${workspaceFolder}/src/ImGuiLayer/*.cpp",
+                "${workspaceFolder}/src/Renderer/*.cpp",
+                "-lglfw3dll",
+                "-lassimpdll",
+                "-O2",
+                "-o",
+                "${workspaceFolder}/main.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "compiler: C:/msys64/mingw64/bin/g++.exe"
+        }
+    ]
+}
