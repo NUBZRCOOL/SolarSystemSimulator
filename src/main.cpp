@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include "Camera/Camera.h"
+#include "math.h"
 #include "Object/Object.h"
 #include "vendor/glm/glm.hpp"
 #include "vendor/glm/gtc/matrix_transform.hpp"
@@ -15,6 +16,7 @@
 #include "Scene/Scene.h"
 #include "ImGuiLayer/ImGuiLayer.h"
 #include "Renderer/Renderer.h"
+#include "ParametricCurve/ParametricCurve.h"
 
 
 int WIDTH = 1920;
@@ -45,6 +47,12 @@ float uniformScale = 1.0f;
 static glm::vec3 objectRotation = glm::vec3(0.0f);
 static float rotationAngle = 0.0f;
 
+float semiMaj = 3.0f;
+float ecc = 0.5f;
+float semiMin = semiMaj * sqrt(1 - pow(ecc, 2));
+float meanAnom = 0.0f;
+float eccAnom = 0.0f;
+
 
 int main(int argc, char **argv) {
 
@@ -58,6 +66,13 @@ int main(int argc, char **argv) {
 
     Object earth("C:\\Users\\nubai\\Desktop\\i am a dev lol\\C++\\SolarSystemSimulation\\res\\objects\\earth\\earth.glb");
     Object lamp("C:\\Users\\nubai\\Desktop\\i am a dev lol\\C++\\SolarSystemSimulation\\res\\objects\\lamp\\lamp.glb");
+
+    Shader curveShader(
+        "C:\\Users\\nubai\\Desktop\\i am a dev lol\\C++\\SolarSystemSimulation\\res\\shaders\\parametric\\vertex.vs",
+        "C:\\Users\\nubai\\Desktop\\i am a dev lol\\C++\\SolarSystemSimulation\\res\\shaders\\parametric\\fragment.fs",
+        "C:\\Users\\nubai\\Desktop\\i am a dev lol\\C++\\SolarSystemSimulation\\res\\shaders\\parametric\\geometry.gs"       
+    );
+    ParametricCurve curve;
 
     Scene scene;
     scene.add(earth);
@@ -92,25 +107,50 @@ int main(int argc, char **argv) {
         
         Input::update(deltaTime);
         Input::syncCursor();
-        ///////////////////////////////////////////////////////////////////////////////
+        glClearColor(0, 0, 0, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         light.color = glm::vec3(cols[0], cols[1], cols[2]);
         light.position = lamp.getPosition();
+        float earthpos = earth.getPosition().y;
+        semiMin = semiMaj * sqrt(1 - pow(ecc, 2));
+
+        meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        for (int i = 0; i < 30; i++) {
+            float f_E = eccAnom - ecc * sin(eccAnom) - meanAnom;
+            float fPrime_E = 1.0 - ecc * cos(eccAnom);
+            float E_next = eccAnom - f_E / fPrime_E;
+            eccAnom = E_next;
+        }
         
+        float (*p[3])(float) = {
+            [](float f){return semiMaj*(cos(f) - ecc);},
+            [](float f){return 0.0f;},
+            [](float f){return semiMin*sin(f);}
+        };
         earth.setPosition(glm::vec3(
-            3 * cos(glfwGetTime() / 5.0),
-            earth.getPosition().y,
-            3 * sin(glfwGetTime() / 5.0)
+            p[0](eccAnom),
+            p[1](0.0f),
+            p[2](eccAnom)
         ));
         earth.setRotation(glm::vec3(
             earth.getRotationEuler().x,
             -glfwGetTime()*(180/AI_MATH_PI),
-            earth.getRotationEuler().x
+            earth.getRotationEuler().z
         ));
+
+        glm::mat4 proj = glm::perspective(
+            glm::radians(camera.Zoom),
+            (float)WIDTH / HEIGHT,
+            0.1f,
+            100.0f
+        );
+        curve.init(0, 2 * AI_MATH_PI_F, 50);
+        curve.updateCurve(p);
+        curve.render(curveShader, camera.getViewMat(), proj, 2.0, glm::vec2(WIDTH, HEIGHT));
         
-        ///////////////////////////////////////////////////////////////////////////////
-        glClearColor(0, 0, 0, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         renderer.render(scene, camera, light, window.getWidth(), window.getHeight());
 
@@ -123,6 +163,9 @@ int main(int argc, char **argv) {
         ImGui::SliderFloat("Speed", speed, 0.1, 15);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
         // ImGui::Checkbox("Cross-view", &crossView);
+        ImGui::Separator();
+        ImGui::SliderFloat("Semi-major axis", &semiMaj, 0.1, 50);
+        ImGui::SliderFloat("Eccentricity", &ecc, 0.0f, 1.0f);
         ImGui::Separator();
         ImGui::ColorEdit3("Light color", cols);
         ImGui::Separator();

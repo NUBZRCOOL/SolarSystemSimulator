@@ -5,13 +5,14 @@
 #include <sstream>
 #include <iostream>
 
-Shader::Shader(const char* vPath, const char *fPath) {
+Shader::Shader(const char* vPath, const char *fPath, const char *gPath) {
 
-    std::string vCode, fCode;
-    std::ifstream vFile, fFile;
+    std::string vCode, fCode, gCode;
+    std::ifstream vFile, fFile, gFile;
 
     vFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     fFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    gFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
     try {
         vFile.open(vPath);
@@ -27,6 +28,14 @@ Shader::Shader(const char* vPath, const char *fPath) {
 
         vCode = vStream.str();
         fCode = fStream.str();
+
+        if (gPath != nullptr) {
+            gFile.open(gPath);
+            std::stringstream gStream;
+            gStream << gFile.rdbuf();
+            gFile.close();
+            gCode = gStream.str();
+        }
     } catch (std::ifstream::failure e) {
         std::cout << "ERROR : shader not successfully read" << std::endl;
     }
@@ -37,7 +46,7 @@ Shader::Shader(const char* vPath, const char *fPath) {
     /////////////////////////////////////////////////
 
 
-    unsigned int vertex, fragment;
+    unsigned int vertex, fragment, geometry;
     int success;
     char infoLog[512];
 
@@ -62,10 +71,26 @@ Shader::Shader(const char* vPath, const char *fPath) {
         std::cout << "ERROR WHEN COMPILING FSHADER\n"  << infoLog << std::endl;
     }
 
+    if (gPath != nullptr) {
+        const char *gShaderCode = gCode.c_str();
+        geometry = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(geometry, 1, &gShaderCode, NULL);
+        glCompileShader(geometry);
+
+        glGetShaderiv(geometry, GL_COMPILE_STATUS, &success);
+        if (!success) {
+            glGetShaderInfoLog(geometry, 512, NULL, infoLog);
+            std::cout << "ERROR WHEN COMPILING GSHADER\n"  << infoLog << std::endl;
+        }
+    }
+
 
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
+    if (gPath != nullptr) {
+        glAttachShader(ID, geometry);
+    }
     glLinkProgram(ID);
 
     glGetProgramiv(ID, GL_LINK_STATUS, &success);
@@ -76,6 +101,9 @@ Shader::Shader(const char* vPath, const char *fPath) {
 
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+    if (gPath != nullptr) {
+        glDeleteShader(geometry);
+    }
 }
 
 void Shader::use() {
@@ -101,4 +129,8 @@ void Shader::setMat4(const std::string &name, glm::mat4 value) {
 
 void Shader::setVec3(const std::string &name, glm::vec3 value) {
     glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
+}
+
+void Shader::setVec2(const std::string &name, glm::vec2 value) {
+    glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
 }

@@ -18,7 +18,7 @@ class Shader {
         unsigned int ID;
         
 
-        Shader(const char* vPath, const char *fPath);
+        Shader(const char* vPath, const char *fPath, const char *gPath = nullptr);
         
         void use();
 
@@ -26,5 +26,6 @@ class Shader {
         void setInt(const std::string &name, int value);
         void setFloat(const std::string &name, float value);
         void setVec3(const std::string &name, glm::vec3 value);
+        void setVec2(const std::string &name, glm::vec2 value);
         void setMat4(const std::string &name, glm::mat4 value);
 };
