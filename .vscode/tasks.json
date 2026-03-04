@@ -26,9 +26,9 @@
                 "${workspaceFolder}/src/ImGuiLayer/*.cpp",
                 "${workspaceFolder}/src/Renderer/*.cpp",
                 "${workspaceFolder}/src/ParametricCurve/*.cpp",
+                "${workspaceFolder}/src/Planet/*.cpp",
                 "-lglfw3dll",
                 "-lassimpdll",
-                "-O2",
                 "-o",
                 "${workspaceFolder}/main.exe"
             ],

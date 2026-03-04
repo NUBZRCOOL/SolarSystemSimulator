@@ -11,5 +11,5 @@ struct Light {
 
 class Renderer {
     public:
-        void render(Scene &scene, Camera &camera, const Light &light, int w, int h);
+        void render(Scene &scene, Camera &camera, const Light &light, int w, int h, glm::mat4 proj);
 };

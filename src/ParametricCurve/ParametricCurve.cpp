@@ -35,7 +35,7 @@ void ParametricCurve::render(Shader &shader, glm::mat4 view, glm::mat4 proj, flo
     glBindVertexArray(0);
 }
 
-void ParametricCurve::generateCurve(float tStart, float tEnd, int segments, float (*p[3])(float)) {
+void ParametricCurve::generateCurve(float tStart, float tEnd, int segments, std::array<std::function<float(float)>, 3> p) {
     float step = (tEnd - tStart) / segments;
     for (int i = 0; i <= segments; i++) {
         float t = tStart + i * step;
@@ -53,6 +53,6 @@ void ParametricCurve::generateCurve(float tStart, float tEnd, int segments, floa
     glBindVertexArray(0);
 }
 
-void ParametricCurve::updateCurve(float (*p[3])(float)) {
+void ParametricCurve::updateCurve(std::array<std::function<float(float)>, 3> p) {
     generateCurve(tStart, tEnd, segments, p);
 }

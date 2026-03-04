@@ -7,6 +7,7 @@
 #include "../Shader/Shader.h"
 #include "../vendor/glm/gtc/matrix_transform.hpp"
 #include "../vendor/glm/gtc/type_ptr.hpp"
+#include <functional>
 
 class ParametricCurve {
     private:
@@ -21,7 +22,7 @@ class ParametricCurve {
         
         void init(float tStart, float tEnd, int segments);
         void render(Shader &shader, glm::mat4 view, glm::mat4 proj, float lineWidth, glm::vec2 viewportSize);
-        void updateCurve(float (*p[3])(float));
+        void updateCurve(std::array<std::function<float(float)>, 3> p);
         
-        void generateCurve(float tStart, float tEnd, int segments, float (*p[3])(float));
+        void generateCurve(float tStart, float tEnd, int segments, std::array<std::function<float(float)>, 3> p);
 };

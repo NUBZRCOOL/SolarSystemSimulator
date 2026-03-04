@@ -1,14 +1,14 @@
 #include "Renderer.h"
 #include <glad/glad.h>
 
-void Renderer::render(Scene &scene, Camera &camera, const Light &light, int w, int h) {
+void Renderer::render(Scene &scene, Camera &camera, const Light &light, int w, int h, glm::mat4 proj) {
     glm::mat4 view = camera.getViewMat();
-    glm::mat4 proj = glm::perspective(
-        glm::radians(camera.Zoom),
-        (float)w / h,
-        0.1f,
-        100.0f
-    );
+    // glm::mat4 proj = glm::perspective(
+    //     glm::radians(camera.Zoom),
+    //     (float)w / h,
+    //     0.1f,
+    //     100.0f
+    // );
 
     for (auto &objRef : scene.getObjects()) {
         Object &obj = objRef.get();

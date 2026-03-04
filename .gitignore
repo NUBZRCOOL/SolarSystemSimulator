@@ -3,4 +3,5 @@ include/
 lib/
 *.ini
 res/objects/earth/*.glb
+res/objects/mars/*.glb
 res/objects/lamp/*.glb
