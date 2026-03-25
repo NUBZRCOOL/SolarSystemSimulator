@@ -22,7 +22,7 @@ class ParametricCurve {
         
         void init(float tStart, float tEnd, int segments);
         void render(Shader &shader, glm::mat4 view, glm::mat4 proj, float lineWidth, glm::vec2 viewportSize);
-        void updateCurve(std::array<std::function<float(float)>, 3> p);
+        void updateCurve(std::array<std::function<double(double)>, 3> p);
         
-        void generateCurve(float tStart, float tEnd, int segments, std::array<std::function<float(float)>, 3> p);
+        void generateCurve(float tStart, float tEnd, int segments, std::array<std::function<double(double)>, 3> p);
 };

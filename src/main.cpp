@@ -24,10 +24,13 @@ int HEIGHT = 1080;
 
 float lastX = WIDTH / 2;
 float lastY = HEIGHT / 2;
-float deltaTime = 0.0f;
-float fpsTimer = 0.0f;
+double deltaTime = 0.0f;
+double fpsTimer = 0.0f;
 int numFrames = 0;
 double fps = 0.0f;
+
+double epoch = 946684800.0;
+double timeReal = epoch;
 
 const double TARGET_FPS = 60.0;
 const double TARGET_FRAME_TIME = 1 / TARGET_FPS;
@@ -47,6 +50,10 @@ float uniformScale = 1.0f;
 static glm::vec3 objectRotation = glm::vec3(0.0f);
 static float rotationAngle = 0.0f;
 
+float radiusScale = 2e4;    
+float sunRadiusScale = radiusScale / 50;
+float semiMajScale = 10;
+
 
 
 int main(int argc, char **argv) {
@@ -59,22 +66,24 @@ int main(int argc, char **argv) {
 
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
-    Planet Earth("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", 3.0f, 0.5f, 0.0f, 0.0f);
-    Object lamp("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\lamp\\lamp.glb");
-    Planet Mars("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", 10.0f, 0.2f, 0.0f, 0.0f);
+    OrbitalParameters earthParams = {radiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
+    Planet Earth("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams);
+    Object Sun("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
+    OrbitalParameters marsParams = {radiusScale*2.2657003e-5, semiMajScale*2.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
+    Planet Mars("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams);
 
     Shader curveShader(
         "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\vertex.vs",
         "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\fragment.fs",
         "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\geometry.gs"       
     );
-    ParametricCurve curve;
-    ParametricCurve curveM;
 
     Scene scene;
     scene.add(Earth.getPlanet());
-    scene.add(lamp);
+    scene.add(Sun);
     scene.add(Mars.getPlanet());
+
+    Sun.setScale(glm::vec3(sunRadiusScale*0.00465479256));
 
     Renderer renderer;
 
@@ -102,6 +111,8 @@ int main(int argc, char **argv) {
             fpsTimer = 0; numFrames = 0;
         }
         lastTime = curTime;
+
+        timeReal += deltaTime;
         
         Input::update(deltaTime);
         Input::syncCursor();
@@ -110,7 +121,7 @@ int main(int argc, char **argv) {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         light.color = glm::vec3(cols[0], cols[1], cols[2]);
-        light.position = lamp.getPosition();
+        light.position = Sun.getPosition();
 
         Earth.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
         Earth.solveEccAnom();
@@ -123,16 +134,12 @@ int main(int argc, char **argv) {
         glm::mat4 proj = glm::perspective(
             glm::radians(camera.Zoom),
             (float)WIDTH / HEIGHT,
-            2.0f,
+            0.1f,
             1000.0f
         );
-        curve.init(0, 2 * AI_MATH_PI_F, 100);
-        curve.updateCurve(Earth.getP());
-        curve.render(curveShader, camera.getViewMat(), proj, 2.0, glm::vec2(WIDTH, HEIGHT));
 
-        curveM.init(0, 2 * AI_MATH_PI_F, 100);
-        curveM.updateCurve(Mars.getP());
-        curveM.render(curveShader, camera.getViewMat(), proj, 2.0, glm::vec2(WIDTH, HEIGHT));
+        Earth.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+        Mars.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
         
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
@@ -146,10 +153,13 @@ int main(int argc, char **argv) {
         ImGui::Text("Pitch: %.2f Yaw: %.2f", camera.Pitch, camera.Yaw);
         ImGui::SliderFloat("Speed", speed, 0.1, 15);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
+        ImGui::SliderFloat("Radius Scale", &radiusScale, 1, 1e5);
+        ImGui::SliderFloat("Semi major Scale", &semiMajScale, 1, 1e5);
+        ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
         ImGui::Separator();
-        ImGui::SliderFloat("Semi-major axis", &Earth.semiMaj, 0.1, 50);
-        ImGui::SliderFloat("Eccentricity", &Earth.ecc, 0.0f, 1.0f);
+        // ImGui::SliderFloat("Semi-major axis", &Earth.semiMaj, 0.1, 50);
+        // ImGui::SliderFloat("Eccentricity", &Earth.ecc, 0.0f, 1.0f);
         ImGui::Separator();
         ImGui::ColorEdit3("Light color", cols);
         ImGui::Separator();
