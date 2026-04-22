@@ -50,11 +50,11 @@ float uniformScale = 1.0f;
 static glm::vec3 objectRotation = glm::vec3(0.0f);
 static float rotationAngle = 0.0f;
 
-float radiusScale = 2e4;    
+float radiusScale = 2e6;    
 float sunRadiusScale = radiusScale / 50;
-float semiMajScale = 10;
+float semiMajScale = 10000;
 
-
+bool curves = true;
 
 int main(int argc, char **argv) {
 
@@ -66,11 +66,26 @@ int main(int argc, char **argv) {
 
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
+    OrbitalParameters mercuryParams = {radiusScale*1.63083872e-5, semiMajScale*0.38709843, 0.20563661, 7.00559432, 252.25032350, 77.45779628, 48.33076593};
+    OrbitalParameters venusParams = {radiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
     OrbitalParameters earthParams = {radiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
+    OrbitalParameters marsParams = {radiusScale*2.2657003e-5, semiMajScale*1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891};
+    OrbitalParameters jupiterParams = {radiusScale*0.000477894503, semiMajScale*5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909};
+    OrbitalParameters saturnParams = {radiusScale*0.000389256877, semiMajScale*9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448};
+    OrbitalParameters uranusParams = {radiusScale*0.0001695345, semiMajScale*19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503};
+    OrbitalParameters neptuneParams = {radiusScale*0.000164587904, semiMajScale*30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574};
+
+    Planet Mercury("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\mercury\\mercury.glb", mercuryParams);
+    Planet Venus("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\venus\\venus.glb", venusParams);
     Planet Earth("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams);
-    Object Sun("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
-    OrbitalParameters marsParams = {radiusScale*2.2657003e-5, semiMajScale*2.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
     Planet Mars("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams);
+    Planet Jupiter("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\jupiter\\jupiter.glb", jupiterParams);
+    Planet Saturn("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\saturn\\saturn.glb", saturnParams);
+    Planet Uranus("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\uranus\\uranus.glb", uranusParams);
+    Planet Neptune("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\neptune\\neptune.glb", neptuneParams);
+    Object Sun("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
+    
+    
 
     Shader curveShader(
         "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\vertex.vs",
@@ -79,10 +94,16 @@ int main(int argc, char **argv) {
     );
 
     Scene scene;
+    scene.add(Mercury.getPlanet());
+    scene.add(Venus.getPlanet());
     scene.add(Earth.getPlanet());
-    scene.add(Sun);
     scene.add(Mars.getPlanet());
-
+    scene.add(Jupiter.getPlanet());
+    scene.add(Saturn.getPlanet());
+    scene.add(Uranus.getPlanet());
+    scene.add(Neptune.getPlanet());
+    scene.add(Sun);
+    
     Sun.setScale(glm::vec3(sunRadiusScale*0.00465479256));
 
     Renderer renderer;
@@ -123,6 +144,14 @@ int main(int argc, char **argv) {
         light.color = glm::vec3(cols[0], cols[1], cols[2]);
         light.position = Sun.getPosition();
 
+        Mercury.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Mercury.solveEccAnom();
+        Mercury.update();
+
+        Venus.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Venus.solveEccAnom();
+        Venus.update();
+
         Earth.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
         Earth.solveEccAnom();
         Earth.update();
@@ -131,16 +160,40 @@ int main(int argc, char **argv) {
         Mars.solveEccAnom();
         Mars.update();
 
+        Jupiter.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Jupiter.solveEccAnom();
+        Jupiter.update();
+        
+        Saturn.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Saturn.solveEccAnom();
+        Saturn.update();
+
+        Uranus.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Uranus.solveEccAnom();
+        Uranus.update();
+
+        Neptune.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Neptune.solveEccAnom();
+        Neptune.update();
+
         glm::mat4 proj = glm::perspective(
             glm::radians(camera.Zoom),
             (float)WIDTH / HEIGHT,
             0.1f,
-            1000.0f
+            100000.0f
         );
 
-        Earth.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
-        Mars.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
-        
+        if (curves) {
+            Mercury.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Venus.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Earth.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Mars.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Jupiter.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Saturn.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Uranus.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Neptune.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+        }
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         renderer.render(scene, camera, light, window.getWidth(), window.getHeight(), proj);
@@ -155,6 +208,7 @@ int main(int argc, char **argv) {
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
         ImGui::SliderFloat("Radius Scale", &radiusScale, 1, 1e5);
         ImGui::SliderFloat("Semi major Scale", &semiMajScale, 1, 1e5);
+        ImGui::Checkbox("Draw Curves?", &curves);
         ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
         ImGui::Separator();
