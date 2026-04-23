@@ -50,9 +50,10 @@ float uniformScale = 1.0f;
 static glm::vec3 objectRotation = glm::vec3(0.0f);
 static float rotationAngle = 0.0f;
 
-float radiusScale = 2e6;    
-float sunRadiusScale = radiusScale / 50;
-float semiMajScale = 10000;
+float smallRadiusScale = 1e6;    
+float largeRadiusScale = smallRadiusScale / 3;  
+float sunRadiusScale = smallRadiusScale / 25;
+float semiMajScale = 1000;
 
 bool curves = true;
 
@@ -66,14 +67,14 @@ int main(int argc, char **argv) {
 
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
-    OrbitalParameters mercuryParams = {radiusScale*1.63083872e-5, semiMajScale*0.38709843, 0.20563661, 7.00559432, 252.25032350, 77.45779628, 48.33076593};
-    OrbitalParameters venusParams = {radiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
-    OrbitalParameters earthParams = {radiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    OrbitalParameters marsParams = {radiusScale*2.2657003e-5, semiMajScale*1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891};
-    OrbitalParameters jupiterParams = {radiusScale*0.000477894503, semiMajScale*5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909};
-    OrbitalParameters saturnParams = {radiusScale*0.000389256877, semiMajScale*9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448};
-    OrbitalParameters uranusParams = {radiusScale*0.0001695345, semiMajScale*19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503};
-    OrbitalParameters neptuneParams = {radiusScale*0.000164587904, semiMajScale*30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574};
+    OrbitalParameters mercuryParams = {smallRadiusScale*1.63083872e-5, semiMajScale*0.38709843, 0.20563661, 7.00559432, 252.25032350, 77.45779628, 48.33076593};
+    OrbitalParameters venusParams = {smallRadiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
+    OrbitalParameters earthParams = {smallRadiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
+    OrbitalParameters marsParams = {smallRadiusScale*2.2657003e-5, semiMajScale*1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891};
+    OrbitalParameters jupiterParams = {largeRadiusScale*0.000477894503, semiMajScale*5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909};
+    OrbitalParameters saturnParams = {largeRadiusScale*0.000389256877, semiMajScale*9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448};
+    OrbitalParameters uranusParams = {largeRadiusScale*0.0001695345, semiMajScale*19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503};
+    OrbitalParameters neptuneParams = {largeRadiusScale*0.000164587904, semiMajScale*30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574};
 
     Planet Mercury("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\mercury\\mercury.glb", mercuryParams);
     Planet Venus("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\venus\\venus.glb", venusParams);
@@ -206,7 +207,7 @@ int main(int argc, char **argv) {
         ImGui::Text("Pitch: %.2f Yaw: %.2f", camera.Pitch, camera.Yaw);
         ImGui::SliderFloat("Speed", speed, 0.1, 15);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
-        ImGui::SliderFloat("Radius Scale", &radiusScale, 1, 1e5);
+        ImGui::SliderFloat("Radius Scale", &smallRadiusScale, 1, 1e5);
         ImGui::SliderFloat("Semi major Scale", &semiMajScale, 1, 1e5);
         ImGui::Checkbox("Draw Curves?", &curves);
         ImGui::Text("Time (s): %f", timeReal);
