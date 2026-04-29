@@ -1,9 +1,11 @@
 #include "Planet.h"
 
-Planet::Planet(const char *path, OrbitalParameters params) : planet(path) {
+Planet::Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs) : planet(path) {
 
-    this->params = params;
-    planet.setScale(glm::vec3(params.r));
+    this->initParams = initParams;
+    this->derivs = derivs;
+    
+    planet.setScale(glm::vec3(initParams.r));
     semiMaj = params.a;
     semiMin = semiMaj * sqrt(1 - pow(ecc, 2));
     ecc = params.ecc;
@@ -23,6 +25,14 @@ std::array<std::function<double(double)>, 3> Planet::getP() {
     return p;
 }
 
+void Planet::calcMeanAnom(double T) {
+    double t_0 = 946684800;
+    double T_real = T;
+    double t_elapsed = T_real - t_0;
+    double t_cent = t_elapsed / (60 * 60 * 24 * 365.25 * 100);
+    meanAnom = glm::mod(initParams.L_0 + derivs.dL*t_cent - (initParams.w_0 + derivs.dw * t_cent), (2 * M_PI));
+}
+
 
 void Planet::solveEccAnom() {
     float delta = 1.0f;
@@ -39,6 +49,32 @@ void Planet::solveEccAnom() {
         
         iterations++;
     }
+}
+
+void Planet::updateParams(double T) {
+
+    double t_0 = 946684800;
+    double T_real = T;
+    double t_elapsed = T_real - t_0;
+    double t_cent = t_elapsed / (60 * 60 * 24 * 365.25 * 100);
+
+    double a_0 = initParams.a_0;
+    double ecc_0 = initParams.ecc_0;
+    double i_0 = glm::radians(initParams.i_0);
+    double L_0 = glm::radians(initParams.L_0);
+    double w_0 = glm::radians(initParams.w_0);
+    double O_0 = glm::radians(initParams.O_0);
+
+    params.a = a_0 + derivs.da * t_cent;
+    params.ecc = ecc_0 + derivs.decc * t_cent;
+    params.i = i_0 + derivs.di * t_cent;
+    params.L = L_0 + derivs.dL * t_cent;
+    params.w = w_0 + derivs.dw * t_cent;
+    params.O = O_0 + derivs.dO * t_cent;
+
+    M_0 = initParams.L_0 - w_0;
+    omega = params.w - params.O;
+    dM = derivs.dL - derivs.dw;
 }
 
 void Planet::updatePos() {

@@ -67,15 +67,15 @@ int main(int argc, char **argv) {
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
     OrbitalParameters earthParams = {radiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    Planet Earth("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams);
-    Object Sun("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
+    Planet Earth("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams);
+    Object Sun("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
     OrbitalParameters marsParams = {radiusScale*2.2657003e-5, semiMajScale*2.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    Planet Mars("C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams);
+    Planet Mars("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams);
 
     Shader curveShader(
-        "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\vertex.vs",
-        "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\fragment.fs",
-        "C:\\msys64\\home\\sraina\\SolarSystemSimulator\\res\\shaders\\parametric\\geometry.gs"       
+        "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\vertex.vs",
+        "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\fragment.fs",
+        "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\geometry.gs"       
     );
 
     Scene scene;
