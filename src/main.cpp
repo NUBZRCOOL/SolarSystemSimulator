@@ -177,12 +177,21 @@ int main(int argc, char **argv) {
         Neptune.solveEccAnom();
         Neptune.update();
 
-        glm::mat4 proj = glm::perspective(
-            glm::radians(camera.Zoom),
-            (float)WIDTH / HEIGHT,
-            0.1f,
-            100000.0f
-        );
+        // glm::mat4 proj;
+        // proj = glm::perspective(
+        //     glm::radians(camera.Zoom),
+        //     (float)window.getWidth() / (float)window.getHeight(),
+        //     0.1f,
+        //     100000.0f
+        // );
+
+        glm::mat4 proj = glm::mat4(0.0f);
+        {
+            float n = 0.1;
+            float r = n * tan(glm::radians(camera.Zoom));
+            float t = r * (float)HEIGHT/WIDTH;
+            proj[0][0] = n / r; proj[1][1] = n / t; proj[2][2] = -1; proj[2][3] = -1; proj[3][2] = -2 * n;
+        }
 
         if (curves) {
             Mercury.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
@@ -205,7 +214,7 @@ int main(int argc, char **argv) {
         ImGui::Text("Camera pos: X: %.2f, Y: %.2f, Z: %.2f", camera.Position.x, camera.Position.y, camera.Position.z);
         ImGui::Text("Camera rot: X: %.2f, Y: %.2f, Z: %.2f", camera.Front.x, camera.Front.y, camera.Front.z);
         ImGui::Text("Pitch: %.2f Yaw: %.2f", camera.Pitch, camera.Yaw);
-        ImGui::SliderFloat("Speed", speed, 0.1, 15);
+        ImGui::SliderFloat("Speed", speed, 500, 10000);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
         ImGui::SliderFloat("Radius Scale", &smallRadiusScale, 1, 1e5);
         ImGui::SliderFloat("Semi major Scale", &semiMajScale, 1, 1e5);
