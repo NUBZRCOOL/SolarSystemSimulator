@@ -8,6 +8,9 @@ Window::Window(int width, int height, const char *title) : width(width), height(
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE); 
+
+        
     window = glfwCreateWindow(width, height, title, NULL, NULL);
     if (window == NULL) {
         std::cout << "Couldn't create window" << std::endl;

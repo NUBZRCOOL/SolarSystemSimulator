@@ -50,11 +50,12 @@ float uniformScale = 1.0f;
 static glm::vec3 objectRotation = glm::vec3(0.0f);
 static float rotationAngle = 0.0f;
 
-float radiusScale = 2e4;    
-float sunRadiusScale = radiusScale / 50;
-float semiMajScale = 10;
+float smallRadiusScale = 1e6;    
+float largeRadiusScale = smallRadiusScale / 3;  
+float sunRadiusScale = smallRadiusScale / 25;
+float semiMajScale = 1000;
 
-
+bool curves = true;
 
 int main(int argc, char **argv) {
 
@@ -66,11 +67,42 @@ int main(int argc, char **argv) {
 
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
-    OrbitalParameters earthParams = {radiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    Planet Earth("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams);
+    InitialParameters mercuryParams = {smallRadiusScale*1.63083872e-5, semiMajScale*0.38709843, 0.20563661, 7.00559432, 252.25032350, 77.45779628, 48.33076593};
+    OrbitalDerivatives mercuryDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    InitialParameters venusParams = {smallRadiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
+    OrbitalDerivatives venusDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    
+    InitialParameters earthParams = {smallRadiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
+    OrbitalDerivatives earthDerivs = {0, 0, 0, 0, 35999.37244981, 0, 0, 0, 0, 0, 0};
+
+    InitialParameters marsParams = {smallRadiusScale*2.2657003e-5, semiMajScale*1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891};
+    OrbitalDerivatives marsDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    InitialParameters jupiterParams = {largeRadiusScale*0.000477894503, semiMajScale*5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909};
+    OrbitalDerivatives jupDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    InitialParameters saturnParams = {largeRadiusScale*0.000389256877, semiMajScale*9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448};
+    OrbitalDerivatives satDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    InitialParameters uranusParams = {largeRadiusScale*0.0001695345, semiMajScale*19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503};
+    OrbitalDerivatives uranDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    InitialParameters neptuneParams = {largeRadiusScale*0.000164587904, semiMajScale*30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574};
+    OrbitalDerivatives neptDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+
+    Planet Mercury("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mercury\\mercury.glb", mercuryParams, mercuryDerivs);
+    Planet Venus("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\venus\\venus.glb", venusParams, venusDerivs);
+    Planet Earth("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams, earthDerivs);
+    Planet Mars("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams, marsDerivs);
+    Planet Jupiter("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\jupiter\\jupiter.glb", jupiterParams, jupDerivs);
+    Planet Saturn("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\saturn\\saturn.glb", saturnParams, satDerivs);
+    Planet Uranus("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\uranus\\uranus.glb", uranusParams, uranDerivs);
+    Planet Neptune("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\neptune\\neptune.glb", neptuneParams, neptDerivs);
     Object Sun("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
-    OrbitalParameters marsParams = {radiusScale*2.2657003e-5, semiMajScale*2.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    Planet Mars("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams);
+    
+    
 
     Shader curveShader(
         "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\vertex.vs",
@@ -79,10 +111,16 @@ int main(int argc, char **argv) {
     );
 
     Scene scene;
+    scene.add(Mercury.getPlanet());
+    scene.add(Venus.getPlanet());
     scene.add(Earth.getPlanet());
-    scene.add(Sun);
     scene.add(Mars.getPlanet());
-
+    scene.add(Jupiter.getPlanet());
+    scene.add(Saturn.getPlanet());
+    scene.add(Uranus.getPlanet());
+    scene.add(Neptune.getPlanet());
+    scene.add(Sun);
+    
     Sun.setScale(glm::vec3(sunRadiusScale*0.00465479256));
 
     Renderer renderer;
@@ -123,24 +161,65 @@ int main(int argc, char **argv) {
         light.color = glm::vec3(cols[0], cols[1], cols[2]);
         light.position = Sun.getPosition();
 
-        Earth.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Mercury.calcMeanAnom(timeReal);
+        Mercury.solveEccAnom();
+        Mercury.update();
+
+        Venus.calcMeanAnom(timeReal);
+        Venus.solveEccAnom();
+        Venus.update();
+
+        Earth.calcMeanAnom(timeReal);
         Earth.solveEccAnom();
         Earth.update();
 
-        Mars.meanAnom = ((2 * AI_MATH_PI) / 10.0f) * glfwGetTime();
+        Mars.calcMeanAnom(timeReal);
         Mars.solveEccAnom();
         Mars.update();
 
-        glm::mat4 proj = glm::perspective(
-            glm::radians(camera.Zoom),
-            (float)WIDTH / HEIGHT,
-            0.1f,
-            1000.0f
-        );
-
-        Earth.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
-        Mars.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+        Jupiter.calcMeanAnom(timeReal);
+        Jupiter.solveEccAnom();
+        Jupiter.update();
         
+        Saturn.calcMeanAnom(timeReal);
+        Saturn.solveEccAnom();
+        Saturn.update();
+
+        Uranus.calcMeanAnom(timeReal);
+        Uranus.solveEccAnom();
+        Uranus.update();
+
+        Neptune.calcMeanAnom(timeReal);
+        Neptune.solveEccAnom();
+        Neptune.update();
+
+        // glm::mat4 proj;
+        // proj = glm::perspective(
+        //     glm::radians(camera.Zoom),
+        //     (float)window.getWidth() / (float)window.getHeight(),
+        //     0.1f,
+        //     100000.0f
+        // );
+
+        glm::mat4 proj = glm::mat4(0.0f);
+        {
+            float n = 0.1;
+            float r = n * tan(glm::radians(camera.Zoom));
+            float t = r * (float)HEIGHT/WIDTH;
+            proj[0][0] = n / r; proj[1][1] = n / t; proj[2][2] = -1; proj[2][3] = -1; proj[3][2] = -2 * n;
+        }
+
+        if (curves) {
+            Mercury.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Venus.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Earth.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Mars.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Jupiter.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Saturn.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Uranus.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+            Neptune.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
+        }
+
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         renderer.render(scene, camera, light, window.getWidth(), window.getHeight(), proj);
@@ -151,10 +230,11 @@ int main(int argc, char **argv) {
         ImGui::Text("Camera pos: X: %.2f, Y: %.2f, Z: %.2f", camera.Position.x, camera.Position.y, camera.Position.z);
         ImGui::Text("Camera rot: X: %.2f, Y: %.2f, Z: %.2f", camera.Front.x, camera.Front.y, camera.Front.z);
         ImGui::Text("Pitch: %.2f Yaw: %.2f", camera.Pitch, camera.Yaw);
-        ImGui::SliderFloat("Speed", speed, 0.1, 15);
+        ImGui::SliderFloat("Speed", speed, 500, 10000);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
-        ImGui::SliderFloat("Radius Scale", &radiusScale, 1, 1e5);
+        ImGui::SliderFloat("Radius Scale", &smallRadiusScale, 1, 1e5);
         ImGui::SliderFloat("Semi major Scale", &semiMajScale, 1, 1e5);
+        ImGui::Checkbox("Draw Curves?", &curves);
         ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
         ImGui::Separator();

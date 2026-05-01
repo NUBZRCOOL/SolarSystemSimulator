@@ -1,5 +1,6 @@
 #include "../Object/Object.h"
 #include <string>
+#include <math.h>
 #include <functional>
 #include "../ParametricCurve/ParametricCurve.h"
 
