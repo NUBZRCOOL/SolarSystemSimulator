@@ -27,7 +27,6 @@ struct InitialParameters {
 
 struct OrbitalDerivatives {
     double da;
-    double de;
     double decc;
     double di;
     double dL;
@@ -46,7 +45,7 @@ public:
     Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs);
     // Member variable declaration
     Object& getPlanet();
-    void solveEccAnom();
+    void solveEccAnom(double T);
     void updateParams(double T);
     void updatePos();
     void updateRot();

@@ -68,28 +68,28 @@ int main(int argc, char **argv) {
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
     InitialParameters mercuryParams = {smallRadiusScale*1.63083872e-5, semiMajScale*0.38709843, 0.20563661, 7.00559432, 252.25032350, 77.45779628, 48.33076593};
-    OrbitalDerivatives mercuryDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives mercuryDerivs = {0, 0, 0, 149472.67411175, 0.16047689, 0, 0, 0, 0, 0};
 
     InitialParameters venusParams = {smallRadiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
-    OrbitalDerivatives venusDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives venusDerivs = {0, 0, 0, 58517.81538729, 0.00268329, 0, 0, 0, 0, 0};
     
     InitialParameters earthParams = {smallRadiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    OrbitalDerivatives earthDerivs = {0, 0, 0, 0, 35999.37244981, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives earthDerivs = {0, 0, 0, 35999.37244981, 0.32327364, 0, 0, 0, 0, 0};
 
     InitialParameters marsParams = {smallRadiusScale*2.2657003e-5, semiMajScale*1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891};
-    OrbitalDerivatives marsDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives marsDerivs = {0, 0, 0, 19140.30268499, 0.44441088, 0, 0, 0, 0, 0};
 
     InitialParameters jupiterParams = {largeRadiusScale*0.000477894503, semiMajScale*5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909};
-    OrbitalDerivatives jupDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives jupDerivs = {0, 0, 0, 3034.74612775, 0.21252668, 0, 0, 0, 0, 0};
 
     InitialParameters saturnParams = {largeRadiusScale*0.000389256877, semiMajScale*9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448};
-    OrbitalDerivatives satDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives satDerivs = {0, 0, 0, 1222.49362201, -0.41897216, 0, 0, 0, 0, 0};
 
     InitialParameters uranusParams = {largeRadiusScale*0.0001695345, semiMajScale*19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503};
-    OrbitalDerivatives uranDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives uranDerivs = {0, 0, 0, 428.48202785, 0.40805281, 0, 0, 0, 0, 0};
 
     InitialParameters neptuneParams = {largeRadiusScale*0.000164587904, semiMajScale*30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574};
-    OrbitalDerivatives neptDerivs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    OrbitalDerivatives neptDerivs = {0, 0, 0, 218.45945325, 0.01009938, 0, 0, 0, 0, 0};
 
 
     Planet Mercury("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mercury\\mercury.glb", mercuryParams, mercuryDerivs);
@@ -162,35 +162,35 @@ int main(int argc, char **argv) {
         light.position = Sun.getPosition();
 
         Mercury.calcMeanAnom(timeReal);
-        Mercury.solveEccAnom();
+        Mercury.solveEccAnom(timeReal);
         Mercury.update();
 
         Venus.calcMeanAnom(timeReal);
-        Venus.solveEccAnom();
+        Venus.solveEccAnom(timeReal);
         Venus.update();
 
         Earth.calcMeanAnom(timeReal);
-        Earth.solveEccAnom();
+        Earth.solveEccAnom(timeReal);
         Earth.update();
 
         Mars.calcMeanAnom(timeReal);
-        Mars.solveEccAnom();
+        Mars.solveEccAnom(timeReal);
         Mars.update();
 
         Jupiter.calcMeanAnom(timeReal);
-        Jupiter.solveEccAnom();
+        Jupiter.solveEccAnom(timeReal);
         Jupiter.update();
         
         Saturn.calcMeanAnom(timeReal);
-        Saturn.solveEccAnom();
+        Saturn.solveEccAnom(timeReal);
         Saturn.update();
 
         Uranus.calcMeanAnom(timeReal);
-        Uranus.solveEccAnom();
+        Uranus.solveEccAnom(timeReal);
         Uranus.update();
 
         Neptune.calcMeanAnom(timeReal);
-        Neptune.solveEccAnom();
+        Neptune.solveEccAnom(timeReal);
         Neptune.update();
 
         // glm::mat4 proj;
