@@ -92,23 +92,28 @@ int main(int argc, char **argv) {
     OrbitalDerivatives neptDerivs = {0, 0, 0, 218.45945325, 0.01009938, 0, 0, 0, 0, 0};
 
 
-    Planet Mercury("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mercury\\mercury.glb", mercuryParams, mercuryDerivs);
-    Planet Venus("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\venus\\venus.glb", venusParams, venusDerivs);
-    Planet Earth("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\earth\\earth.glb", earthParams, earthDerivs);
-    Planet Mars("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\mars\\mars.glb", marsParams, marsDerivs);
-    Planet Jupiter("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\jupiter\\jupiter.glb", jupiterParams, jupDerivs);
-    Planet Saturn("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\saturn\\saturn.glb", saturnParams, satDerivs);
-    Planet Uranus("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\uranus\\uranus.glb", uranusParams, uranDerivs);
-    Planet Neptune("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\neptune\\neptune.glb", neptuneParams, neptDerivs);
-    Object Sun("C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\objects\\sun\\sun.glb");
+    std::string baseObjects = "res/objects/";
+
+    Planet Mercury((baseObjects + "mercury/mercury.glb").c_str(), mercuryParams, mercuryDerivs);
+    Planet Venus((baseObjects + "venus/venus.glb").c_str(), venusParams, venusDerivs);
+    Planet Earth((baseObjects + "earth/earth.glb").c_str(), earthParams, earthDerivs);
+    Planet Mars((baseObjects + "mars/mars.glb").c_str(), marsParams, marsDerivs);
+    Planet Jupiter((baseObjects + "jupiter/jupiter.glb").c_str(), jupiterParams, jupDerivs);
+    Planet Saturn((baseObjects + "saturn/saturn.glb").c_str(), saturnParams, satDerivs);
+    Planet Uranus((baseObjects + "uranus/uranus.glb").c_str(), uranusParams, uranDerivs);
+    Planet Neptune((baseObjects + "neptune/neptune.glb").c_str(), neptuneParams, neptDerivs);
+
+    Object Sun((baseObjects + "sun/sun.glb").c_str());
     
     
+    std::string baseShaders = "res/shaders/";
 
     Shader curveShader(
-        "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\vertex.vs",
-        "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\fragment.fs",
-        "C:\\msys64\\home\\nbhatti\\SolarSystemSimulator\\res\\shaders\\parametric\\geometry.gs"       
+        (baseShaders + "parametric/vertex.vs").c_str(),
+        (baseShaders + "parametric/fragment.fs").c_str(),
+        (baseShaders + "parametric/geometry.gs").c_str()
     );
+
 
     Scene scene;
     scene.add(Mercury.getPlanet());

@@ -2,5 +2,5 @@
 0.0 0.0 0.0
 0.002 0.002 0.002
 0.0 0.0 0.0
-C:\msys64\home\nbhatti\SolarSystemSimulator\res\shaders\lighting\light.vs
-C:\msys64\home\nbhatti\SolarSystemSimulator\res\shaders\lighting\obj.fs
+res/shaders/lighting/light.vs
+res/shaders/lighting/obj.fs
