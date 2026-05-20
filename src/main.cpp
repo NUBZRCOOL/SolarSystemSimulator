@@ -45,6 +45,8 @@ int numFrames = 0;
 double fps = 0.0f;
 
 double epoch = 946684800.0;
+float timeMultiplier = 1.0f;
+float actualTimeMultiplier = 1.0f;
 double timeReal = epoch;
 
 const double TARGET_FPS = 60.0;
@@ -355,7 +357,7 @@ int main(int argc, char **argv) {
         }
         lastTime = curTime;
 
-        timeReal += deltaTime;
+        timeReal += deltaTime * (signbit(timeMultiplier) ? -1 : 1) * pow(fabs(timeMultiplier), 7.30103);
         
         Input::update(deltaTime);
         Input::syncCursor();
@@ -437,8 +439,6 @@ int main(int argc, char **argv) {
         ImGui::Text("Pitch: %.2f Yaw: %.2f", camera.Pitch, camera.Yaw);
         ImGui::SliderFloat("Speed", speed, 500, 10000);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
-        ImGui::SliderFloat("Radius Scale", &smallRadiusScale, 1, 1e5);
-        ImGui::SliderFloat("Semi major Scale", &semiMajScale, 1, 1e5);
         ImGui::Checkbox("Draw Curves?", &curves);
         ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
@@ -455,6 +455,8 @@ int main(int argc, char **argv) {
         ImGui::Text("Current Global Time: %s", display_str.c_str());
         // ImGui::SliderFloat("Semi-major axis", &Earth.semiMaj, 0.1, 50);
         // ImGui::SliderFloat("Eccentricity", &Earth.ecc, 0.0f, 1.0f);
+        ImGui::SliderFloat("Exponential Time Multiplier", &timeMultiplier, -10, 10);
+        ImGui::Text("Actual Time Multiplier: %f", (signbit(timeMultiplier) ? -1 : 1) * pow(fabs(timeMultiplier), 7.30103));
         ImGui::Separator();
         ImGui::ColorEdit3("Light color", cols);
         ImGui::Separator();
