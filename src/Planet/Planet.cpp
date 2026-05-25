@@ -1,10 +1,10 @@
 #include "Planet.h"
 
-Planet::Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs) : planet(path) {
+Planet::Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs, RotationParameters rotParams) : planet(path) {
 
     this->initParams = initParams;
     this->derivs = derivs;
-    
+    this->rotParams = rotParams;
     planet.setScale(glm::vec3(initParams.r));
 
     double a_0 = initParams.a_0;
@@ -34,7 +34,7 @@ Planet::Planet(const char *path, InitialParameters initParams, OrbitalDerivative
     p = {
         [this](float f) { return (cos(omega)*cos(params.O)-sin(params.O)*sin(omega)*cos(params.i))*(semiMaj * (cos(f) - ecc)) + (-sin(omega)*cos(params.O)-cos(omega)*sin(params.O)*cos(params.i))*(semiMin * sin(f)); },
         [this](float f) { return (sin(omega)*sin(params.i))*(semiMaj * (cos(f) - ecc)) + (cos(omega)*sin(params.i))*(semiMin * sin(f)); },
-        [this](float f) { return (cos(omega)*sin(params.O)+cos(params.O)*sin(omega)*cos(params.i))*(semiMaj * (cos(f) - ecc)) + (-sin(omega)*sin(params.O)+cos(omega)*cos(params.O)*cos(params.i))*(semiMin * sin(f)); }
+        [this](float f) { return -((cos(omega)*sin(params.O)+cos(params.O)*sin(omega)*cos(params.i))*(semiMaj * (cos(f) - ecc)) + (-sin(omega)*sin(params.O)+cos(omega)*cos(params.O)*cos(params.i))*(semiMin * sin(f))); }
     };
     ParametricCurve curve;
     
@@ -53,7 +53,7 @@ void Planet::calcMeanAnom(double T) {
     double T_real = T;
     double t_elapsed = T_real - t_0;
     double t_cent = t_elapsed / (60 * 60 * 24 * 365.25 * 100);
-    meanAnom = glm::mod(initParams.L_0 + derivs.dL*t_cent - (initParams.w_0 + derivs.dw * t_cent), (2 * glm::pi<double>()));
+    meanAnom = glm::mod((initParams.L_0 + derivs.dL*t_cent) - (initParams.w_0 + derivs.dw * t_cent) + (derivs.b0 * pow(t_cent, 2)) + (derivs.c0*cos(glm::radians(derivs.f0)*t_cent)) + (derivs.s0*sin(glm::radians(derivs.f0)*t_cent)) , (2 * glm::pi<double>()));
 }
 
 
@@ -112,17 +112,28 @@ void Planet::updatePos() {
     planet.setPosition(rawPos);
 }
 
-void Planet::updateRot() {
-    planet.setRotation(glm::vec3(
-        planet.getRotationEuler().x,
-        -glfwGetTime()*(180/AI_MATH_PI),
-        planet.getRotationEuler().z
-    ));
+void Planet::updateRot(double T) {
+    double t_elapsed = T - 946684800;
+    double currentW = rotParams.W0 + ((rotParams.dW/86400.0) * t_elapsed);
+    currentW = fmod(currentW, 360.0);
+    glm::quat spinQuat = glm::angleAxis(glm::radians((float)currentW-90), glm::vec3(0, 1, 0));
+    float latRad = glm::radians((float) rotParams.b0);
+    float lonRad = glm::radians((float) 180 + rotParams.l0);
+
+    glm::vec3 poleDir(
+        cos(latRad) * cos(lonRad), 
+        sin(latRad),
+        cos(latRad) * sin(lonRad)
+    );
+
+    glm::quat tiltQuat = glm::rotation(glm::vec3(0, 1, 0), glm::normalize(poleDir));
+
+    planet.setRotation(tiltQuat * spinQuat);
 }
 
-void Planet::update() {
+void Planet::update(double T) {
     updatePos();
-    updateRot();
+    updateRot(T);
 }
 
 void Planet::drawCurve(Shader& curveShader, glm::mat4 viewMat, glm::mat4 proj, glm::vec2 aspect) {

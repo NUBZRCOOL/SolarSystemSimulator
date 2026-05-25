@@ -3,6 +3,10 @@
 #include <math.h>
 #include <functional>
 #include "../ParametricCurve/ParametricCurve.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include "../vendor/glm/gtc/quaternion.hpp"
+#include "../vendor/glm/gtx/quaternion.hpp"
+
 
 
 struct OrbitalParameters {
@@ -13,6 +17,13 @@ struct OrbitalParameters {
     double L;
     double w;
     double O;
+};
+
+struct RotationParameters {
+    double l0;
+    double b0;
+    double W0;
+    double dW;
 };
 
 struct InitialParameters {
@@ -42,14 +53,14 @@ struct OrbitalDerivatives {
 class Planet {
 public:
     // Constructor declaration
-    Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs);
+    Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs, RotationParameters rotParams);
     // Member variable declaration
     Object& getPlanet();
     void solveEccAnom(double T);
     void updateParams(double T);
     void updatePos();
-    void updateRot();
-    void update();
+    void updateRot(double T);
+    void update(double T);
     void calcMeanAnom(double T);
     void drawCurve(Shader& curveShader, glm::mat4 viewMat, glm::mat4 proj, glm::vec2 aspect);
     std::array<std::function<double(double)>, 3> getP();
@@ -68,6 +79,7 @@ public:
     InitialParameters initParams;
     OrbitalDerivatives derivs;
     OrbitalParameters params;
+    RotationParameters rotParams;
     
     ParametricCurve curve;
     Object planet;

@@ -5,6 +5,8 @@ in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragPos;
 
+in float vLogDepth;
+
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform vec3 objCol;
@@ -36,4 +38,6 @@ void main() {
     vec3 result = (ambient + diffuse + specular);
 
     FragColor = vec4(result, 1.0);
+
+    gl_FragDepth = 1.0 - (log2(vLogDepth + 1.0) / log2(1e12f + 1.0));
 }

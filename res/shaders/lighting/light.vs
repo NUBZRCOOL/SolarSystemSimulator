@@ -8,12 +8,17 @@ out vec2 TexCoord;
 out vec3 Normal;
 out vec3 FragPos;
 
+out float vLogDepth;
+const float C = 1.0f;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 
 void main() {
-    gl_Position = proj * view * model * vec4(vPos, 1.0);
+    vec4 clipPos = proj * view * model * vec4(vPos, 1.0);
+    vLogDepth = clipPos.w;
+    gl_Position = clipPos;
     TexCoord = aTexCoord;
     Normal = mat3(transpose(inverse(model))) * aNormal;
     FragPos = vec3(model * vec4(vPos, 1.0));

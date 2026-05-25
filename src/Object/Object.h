@@ -28,7 +28,7 @@ class Object {
 
         void setName(const char *name);
         void setPosition(glm::vec3 vector);
-        void setRotation(glm::vec3 vector);
+        void setRotation(glm::quat newOrientation);
         void setScale(glm::vec3 vector);
         void setOrigin(glm::vec3 pos);
 
@@ -51,7 +51,7 @@ class Object {
 
         glm::vec3 position;
         glm::vec3 scale;
-        glm::vec3 rotation;
+        glm::quat orientation;
         glm::vec3 pivot;
 
 };

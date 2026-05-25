@@ -6,6 +6,9 @@ layout (triangle_strip, max_vertices=4) out;
 uniform float lineWidth;
 uniform vec2 viewportSize;
 
+in float vLogDepth_VS[];
+out float vLogDepth;
+
 void main() {
 
     vec4 p1 = gl_in[0].gl_Position;
@@ -19,12 +22,14 @@ void main() {
 
     vec2 offset = normal * lineWidth * 2.0 / viewportSize;
 
+    vLogDepth = vLogDepth_VS[0];
     gl_Position = vec4((ndc1 + offset) * p1.w, p1.z, p1.w);
     EmitVertex();
 
     gl_Position = vec4((ndc1 - offset) * p1.w, p1.z, p1.w);
     EmitVertex();
 
+    vLogDepth = vLogDepth_VS[1];
     gl_Position = vec4((ndc2 + offset) * p2.w, p2.z, p2.w);
     EmitVertex();
 
