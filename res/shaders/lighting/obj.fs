@@ -39,5 +39,5 @@ void main() {
 
     FragColor = vec4(result, 1.0);
 
-    gl_FragDepth = 1.0 - (log2(vLogDepth + 1.0) / log2(1e12f + 1.0));
+    // gl_FragDepth = 1.0 - (log2(vLogDepth + 1.0) / log2(1e12f + 1.0));
 }
