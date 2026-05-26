@@ -2,13 +2,8 @@
 #include <glad/glad.h>
 
 void Renderer::render(Scene &scene, Camera &camera, const Light &light, int w, int h, glm::mat4 proj) {
-    glm::mat4 view = camera.getViewMat();
-    // glm::mat4 proj = glm::perspective(
-    //     glm::radians(camera.Zoom),
-    //     (float)w / h,
-    //     0.1f,
-    //     100.0f
-    // );
+    // glm::mat4 view = camera.getViewMat();
+    glm::mat4 view = glm::mat4(glm::mat3(camera.getViewMat()));
 
     for (auto &objRef : scene.getObjects()) {
         Object &obj = objRef.get();
@@ -16,8 +11,8 @@ void Renderer::render(Scene &scene, Camera &camera, const Light &light, int w, i
 
         shader->use();
         shader->setVec3("lightCol", light.color);
-        shader->setVec3("lightPos", light.position);
-        shader->setVec3("viewPos", camera.Position);
+        shader->setVec3("lightPos", light.position - (glm::vec3)camera.Position);
+        shader->setVec3("viewPos", glm::vec3(0.0f));
 
         obj.Draw(view, proj);
     }

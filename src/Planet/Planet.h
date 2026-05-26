@@ -2,6 +2,9 @@
 #include <string>
 #include <math.h>
 #include <functional>
+#define GLM_ENABLE_EXPERIMENTAL
+#include "../vendor/glm/gtc/quaternion.hpp"
+#include "../vendor/glm/gtx/quaternion.hpp"
 #include "../ParametricCurve/ParametricCurve.h"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "../vendor/glm/gtc/quaternion.hpp"
@@ -49,18 +52,25 @@ struct OrbitalDerivatives {
     double f0;
 };
 
+struct RotParams {
+    double l_0;
+    double b_0;
+    double W_0;
+    double dW;
+};
+
 
 class Planet {
 public:
     // Constructor declaration
-    Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs, RotationParameters rotParams);
+    Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs, RotParams rot);
     // Member variable declaration
     Object& getPlanet();
     void solveEccAnom(double T);
     void updateParams(double T);
     void updatePos();
     void updateRot(double T);
-    void update(double T);
+    void update(double T, glm::dvec3 cameraPos);
     void calcMeanAnom(double T);
     void drawCurve(Shader& curveShader, glm::mat4 viewMat, glm::mat4 proj, glm::vec2 aspect);
     std::array<std::function<double(double)>, 3> getP();
@@ -79,7 +89,7 @@ public:
     InitialParameters initParams;
     OrbitalDerivatives derivs;
     OrbitalParameters params;
-    RotationParameters rotParams;
+    RotParams rot;
     
     ParametricCurve curve;
     Object planet;

@@ -3,7 +3,7 @@
 namespace fs = std::filesystem;
 
 Object::Object(const char *path)
- : model(path), modelMat(glm::mat4(1.0f)), position(glm::vec3(0.0f)), scale(glm::vec3(1.0f)), orientation(glm::quat(1, 0, 0, 0)), pivot(glm::vec3(0.0f)) {
+ : model(path), modelMat(glm::mat4(1.0f)), position(glm::vec3(0.0f)), scale(glm::vec3(1.0f)), orientation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f)), pivot(glm::vec3(0.0f)) {
 
     this->path = path;
 
@@ -118,14 +118,18 @@ void Object::updateModelMatrix() {
 
     glm::mat4 translate = glm::translate(glm::mat4(1.0f), position);
     
-    glm::mat4 rotation = glm::mat4_cast(orientation);
-
+    // glm::mat4 rotationX = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    // glm::mat4 rotationY = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    // glm::mat4 rotationZ = glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 rotMat = glm::mat4_cast(orientation);
+    
     glm::mat4 scaling = glm::scale(glm::mat4(1.0f), scale);
 
     glm::mat4 toPivot = glm::translate(glm::mat4(1.0f), -pivot);
     glm::mat4 fromPivot = glm::translate(glm::mat4(1.0f), pivot);
 
-    modelMat = translate * fromPivot * rotation * scaling * toPivot;
+    // modelMat = translate * fromPivot * rotationZ * rotationY * rotationX * scaling * toPivot;
+    modelMat = translate * fromPivot * rotMat * scaling * toPivot;
 }
 
 std::string Object::getName() { return name; }
@@ -134,7 +138,7 @@ glm::vec3 Object::getPosition() { return position; }
 
 glm::vec3 Object::getScale() { return scale; }
 
-glm::vec3 Object::getRotationEuler() { return glm::eulerAngles(orientation); }
+glm::vec3 Object::getRotationEuler() { return glm::degrees(glm::eulerAngles(orientation)); }
 
 
 void Object::setName(const char *name) { this->name = name; }
@@ -155,8 +159,18 @@ void Object::setScale(glm::vec3 vector) {
     updateShader();
 }
 
+void Object::setRotation(glm::vec3 vector) {
+    
+    orientation = glm::quat(glm::radians(vector));
+    
+    updateModelMatrix();
+    updateShader();
+}
+
 void Object::setRotation(glm::quat newOrientation) {
+    
     orientation = newOrientation;
+    
     updateModelMatrix();
     updateShader();
 }

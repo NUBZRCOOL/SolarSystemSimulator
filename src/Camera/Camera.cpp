@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-Camera::Camera(glm::vec3 pos, glm::vec3 up, float yaw, float pitch)
+Camera::Camera(glm::dvec3 pos, glm::dvec3 up, float yaw, float pitch)
  : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSense(SENSITIVITY), Zoom(ZOOM) {
     
     Position = pos;
@@ -14,14 +14,14 @@ Camera::Camera(glm::vec3 pos, glm::vec3 up, float yaw, float pitch)
 Camera::Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
  : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSense(SENSITIVITY), Zoom(ZOOM) {
 
-    Position = glm::vec3(posX, posY, posZ);
+    Position = glm::dvec3(posX, posY, posZ);
     Up = glm::vec3(upX, upY, upZ);
     Yaw = yaw;
     Pitch = pitch;
     updateCamVectors();
 }
 
-glm::mat4 Camera::getViewMat() { return glm::lookAt(Position, Position + Front, Up); }
+glm::mat4 Camera::getViewMat() { return glm::lookAt(Position, Position + (glm::dvec3)Front, (glm::dvec3)Up); }
 
 void Camera::processKeys(CameraMovement direction, float deltaTime) {
 
@@ -42,7 +42,7 @@ void Camera::processMouse(float xOffset, float yOffset, GLboolean constrainPitch
     xOffset *= MouseSense;
     yOffset *= MouseSense;
 
-    Yaw = glm::mod(Yaw + xOffset, 360.0f);
+    Yaw = glm::mod(Yaw + xOffset, 360.0);
     Pitch += yOffset;
 
     if (constrainPitch) {
@@ -57,13 +57,19 @@ void Camera::processMouse(float xOffset, float yOffset, GLboolean constrainPitch
 }
 
 void Camera::processScroll(float yOffset) {
-    Zoom -= (float)yOffset;
-    if (Zoom < 1.0f) {
-        Zoom = 1.0f;
+    // Zoom -= (float)yOffset;
+    // if (Zoom < 1.0f) {
+    //     Zoom = 1.0f;
+    // }
+    // if (Zoom > 45.0f) {
+    //     Zoom = 45.0f;
+    // }
+    if (yOffset > 0) {
+        MovementSpeed *= 1.2f;
+    } else {
+        MovementSpeed /= 1.2f;
     }
-    if (Zoom > 45.0f) {
-        Zoom = 45.0f;
-    }
+    if (MovementSpeed < 0.00001f) MovementSpeed = 0.00001f;
 }
 
 void Camera::updateCamVectors() {

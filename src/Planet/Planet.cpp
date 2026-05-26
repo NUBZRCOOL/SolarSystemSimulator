@@ -1,10 +1,11 @@
 #include "Planet.h"
 
-Planet::Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs, RotationParameters rotParams) : planet(path) {
+Planet::Planet(const char *path, InitialParameters initParams, OrbitalDerivatives derivs, RotParams rot) : planet(path) {
 
     this->initParams = initParams;
     this->derivs = derivs;
-    this->rotParams = rotParams;
+    this->rot = rot;
+    
     planet.setScale(glm::vec3(initParams.r));
 
     double a_0 = initParams.a_0;
@@ -98,7 +99,7 @@ void Planet::updateParams(double T) {
 
 void Planet::updatePos() {
     semiMin = semiMaj * sqrt(1 - pow(ecc, 2));
-    glm::vec3 rawPos = glm::vec3(
+    glm::dvec3 rawPos = glm::dvec3(
         p[0](eccAnom),
         p[1](eccAnom),
         p[2](eccAnom)
@@ -109,35 +110,68 @@ void Planet::updatePos() {
 
     // glm::mat4 combined = z1 * x1 * z2;
     // planet.setPosition(glm::vec3(combined * glm::vec4(rawPos, 1.0f)));
-    planet.setPosition(rawPos);
+    planet.setPosition(glm::vec3(rawPos));
 }
 
 void Planet::updateRot(double T) {
-    double t_elapsed = T - 946684800;
-    double currentW = rotParams.W0 + ((rotParams.dW/86400.0) * t_elapsed);
+
+    double t_0 = 946684800;
+    double currentW = rot.W_0 + ((rot.dW / 86400) * (T-t_0));
     currentW = fmod(currentW, 360.0);
-    glm::quat spinQuat = glm::angleAxis(glm::radians((float)currentW-90), glm::vec3(0, 1, 0));
-    float latRad = glm::radians((float) rotParams.b0);
-    float lonRad = glm::radians((float) 180 + rotParams.l0);
 
-    glm::vec3 poleDir(
-        cos(latRad) * cos(lonRad), 
-        sin(latRad),
-        cos(latRad) * sin(lonRad)
-    );
+    glm::quat spinQuat = glm::angleAxis(glm::radians((float)currentW - 90), glm::vec3(0, 1, 0));
 
-    glm::quat tiltQuat = glm::rotation(glm::vec3(0, 1, 0), glm::normalize(poleDir));
+    glm::vec3 pole;
+    float latRad = glm::radians((float)rot.b_0);
+    float longRad = glm::radians((float)rot.l_0 + 180.0f);
+    pole.x = cos(latRad) * cos(longRad);
+    pole.y = sin(latRad);
+    pole.z = cos(latRad) * sin(longRad);
+
+    glm::quat tiltQuat = glm::rotation(glm::vec3(0, 1, 0), glm::normalize(pole));
 
     planet.setRotation(tiltQuat * spinQuat);
 }
 
-void Planet::update(double T) {
-    updatePos();
+void Planet::update(double T, glm::dvec3 cameraPos) {
+
+    // Calculate relative position to camera
+    glm::dvec3 relPos = glm::dvec3(p[0](eccAnom), p[1](eccAnom), p[2](eccAnom)) - cameraPos; 
+    float dist = (float)glm::length(relPos); 
+
+    // 1. Determine the "Visual Radius"
+    // This constant (0.002) controls the minimum size of the "star" point.
+    float minVisualRadius = dist * 0.0015f; 
+    float realRadius = (float)initParams.r;
+
+    float finalScale;
+    float pointIntensity = 0.0f;
+
+    // 2. Transition Logic
+    if (minVisualRadius > realRadius) {
+    finalScale = minVisualRadius;
+    
+        // Using a power function (like pow(..., 2.0)) makes the "whitewash" 
+        // kick in faster as the planet gets smaller on screen.
+        float rawIntensity = glm::clamp((minVisualRadius - realRadius) / realRadius, 0.0f, 1.0f);
+        pointIntensity = std::pow(rawIntensity, 0.5f); // Square root makes it reach "white" sooner
+    } else {
+        finalScale = realRadius;
+        pointIntensity = 0.0f;
+    }
+
+    this->planet.setPosition(glm::vec3(relPos));
+    this->planet.setScale(glm::vec3(finalScale));
+    
+    this->planet.updateShader();
+    this->planet.shader->setFloat("pointIntensity", pointIntensity);
+
     updateRot(T);
+    this->planet.updateModelMatrix();
 }
 
 void Planet::drawCurve(Shader& curveShader, glm::mat4 viewMat, glm::mat4 proj, glm::vec2 aspect) {
     curve.init(0, 2 * AI_MATH_PI_F, 100);
     curve.updateCurve(getP());
-    curve.render(curveShader, viewMat, proj, 2.0, aspect);
+    curve.render(curveShader, viewMat, proj, 0.4, aspect);
 }

@@ -4,6 +4,7 @@
 #include <chrono>
 #include "Camera/Camera.h"
 #include "math.h"
+#define GLM_ENABLE_EXPERIMENTAL
 #include "vendor/glm/glm.hpp"
 #include "vendor/glm/gtc/matrix_transform.hpp"
 #include "vendor/glm/gtc/type_ptr.hpp"
@@ -45,8 +46,8 @@ int numFrames = 0;
 double fps = 0.0f;
 
 double epoch = 946684800.0;
-float timeMultiplier = 1.0f;
-float actualTimeMultiplier = 1.0f;
+double timeMultiplier = 1.0f;
+double actualTimeMultiplier = 1.0f;
 double timeReal = epoch;
 
 const double TARGET_FPS = 60.0;
@@ -54,8 +55,8 @@ const double TARGET_FRAME_TIME = 1 / TARGET_FPS;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
 
-float *camFOV = &camera.Zoom;
-float *speed = &camera.MovementSpeed;
+double *camFOV = &camera.Zoom;
+double *speed = &camera.MovementSpeed;
 
 std::vector<std::reference_wrapper<Object>> objects = {};
 static std::vector<std::string> objectNames;
@@ -67,10 +68,10 @@ float uniformScale = 1.0f;
 static glm::vec3 objectRotation = glm::vec3(0.0f);
 static float rotationAngle = 0.0f;
 
-float smallRadiusScale = 1e6;    
-float largeRadiusScale = smallRadiusScale / 3;  
-float sunRadiusScale = smallRadiusScale / 25;
-float semiMajScale = 1000;
+float smallRadiusScale = 1;    
+float largeRadiusScale = smallRadiusScale;  
+float sunRadiusScale = smallRadiusScale;
+float semiMajScale = 1;
 
 bool curves = true;
 
@@ -265,48 +266,48 @@ int main(int argc, char **argv) {
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
     InitialParameters mercuryParams = {smallRadiusScale*1.63083872e-5, semiMajScale*0.38709843, 0.20563661, 7.00559432, 252.25032350, 77.45779628, 48.33076593};
-    OrbitalDerivatives mercuryDerivs = {0, 0.00002123, -0.00590158, 149472.67486623, 0.15940013, -0.12214182, 0, 0, 0, 0};
-    RotationParameters mercuryRots = {318.4100, 82.9900, 329.5480, 6.138503};
-
+    OrbitalDerivatives mercuryDerivs = {0, 0, 0, 149472.67411175, 0.16047689, 0, 0, 0, 0, 0};
+    RotParams mercuryRot = {318.4100,82.9900,329.5480,6.138503};
 
     InitialParameters venusParams = {smallRadiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
-    OrbitalDerivatives venusDerivs = {-0.00000026, -0.00005107, 0.00043494, 58517.81560260, 0.05679648, -0.27274174, 0, 0, 0, 0};
-    RotationParameters venusRots = {30.1860, 88.7610, 160.2000, -1.481369};
-
+    OrbitalDerivatives venusDerivs = {0, 0, 0, 58517.81538729, 0.00268329, 0, 0, 0, 0, 0};
+    RotParams venusRot = {30.1860, 88.7610, 160.2000, -1.481369};
+    
     InitialParameters earthParams = {smallRadiusScale*4.25875e-5, semiMajScale*1.00000261, 0.01671123, -0.00001531, 100.46457166, 102.93768193, 0.0};
-    OrbitalDerivatives earthDerivs = {-0.00000003, -0.00003661, -0.01337178, 35999.37306329, 0.31795260, -0.24123856, 0, 0, 0, 0};
-    RotationParameters earthRots = {90.0000, 66.5610, 190.1470, 360.985623};
+    OrbitalDerivatives earthDerivs = {0, 0, 0, 35999.37244981, 0.32327364, 0, 0, 0, 0, 0};
+    RotParams earthRot = {90.0000, 66.5610, 190.1470, 360.985623};
 
     InitialParameters marsParams = {smallRadiusScale*2.2657003e-5, semiMajScale*1.52371034, 0.09339410, 1.84969142, -4.55343205, -23.94362959, 49.55953891};
-    OrbitalDerivatives marsDerivs = {0.00000097, 0.00009149, -0.00724757, 19140.29934243, 0.45223625, -0.26852431, 0, 0, 0, 0};
-    RotationParameters marsRots = {352.9060, 63.2820, 176.6300, 350.891982};
+    OrbitalDerivatives marsDerivs = {0, 0, 0, 19140.30268499, 0.44441088, 0, 0, 0, 0, 0};
+    RotParams marsRot = {352.9060, 63.2820, 176.6300, 350.891982};
 
     InitialParameters jupiterParams = {largeRadiusScale*0.000477894503, semiMajScale*5.20288700, 0.04838624, 1.30439695, 34.39644051, 14.72847983, 100.47390909};
-    OrbitalDerivatives jupDerivs = {-0.00002864, 0.00018026, -0.00322699, 3034.90371757, 0.18199196, 0.13024619, -0.00012452, 0.06064060, -0.35635438, 38.35125000};
-    RotationParameters jupRots = {247.8140, 87.7830, 284.9500, 870.536000};
+    OrbitalDerivatives jupDerivs = {0, 0, 0, 3034.74612775, 0.21252668, 0, 0, 0, 0, 0};
+    RotParams jupRot = {247.8140, 87.7830, 284.9500, 870.536000};
 
     InitialParameters saturnParams = {largeRadiusScale*0.000389256877, semiMajScale*9.53667594, 0.05386179, 2.48599187, 49.95424423, 92.59887831, 113.66242448};
-    OrbitalDerivatives satDerivs = {-0.00003065, -0.00032044, 0.00451969, 1222.11494724, 0.54179478, -0.25015002, 0.00025899, -0.13434469, 0.87320147, 38.35125000};
-    RotationParameters satRots = {79.5280, 61.9480, 38.9000, 810.793902};
+    OrbitalDerivatives satDerivs = {0, 0, 0, 1222.49362201, -0.41897216, 0, 0, 0, 0, 0};
+    RotParams satRot = {79.5280, 61.9480, 38.9000, 810.793902};
 
     InitialParameters uranusParams = {largeRadiusScale*0.0001695345, semiMajScale*19.18916464, 0.04725744, 0.77263783, 313.23810451, 170.95427630, 74.01692503};
-    OrbitalDerivatives uranDerivs = {-0.00020455, -0.00001550, -0.00180155, 428.49512595, 0.09266985, 0.05739699, 0.00058331, -0.97731848, 0.17689245, 7.67025000};
-    RotationParameters uranRots = {257.6470, 7.7220, 203.8100, -501.160093};
+    OrbitalDerivatives uranDerivs = {0, 0, 0, 428.48202785, 0.40805281, 0, 0, 0, 0, 0};
+    RotParams uranRot = {257.6470, 7.7220, 203.8100, -501.160093};
 
     InitialParameters neptuneParams = {largeRadiusScale*0.000164587904, semiMajScale*30.06992276, 0.00859048, 1.77004347, -55.12002969, 44.96476227, 131.78422574};
-    OrbitalDerivatives neptDerivs = {0.00006447, 0.00000818, 0.00022400, 218.46515314, 0.01009938, -0.00606302, -0.00041348, 0.68346318, -0.10162547, 7.67025000};
-    RotationParameters neptRots = {318.7070, 61.5270, 253.1800, 536.312866};
+    OrbitalDerivatives neptDerivs = {0, 0, 0, 218.45945325, 0.01009938, 0, 0, 0, 0, 0};
+    RotParams neptRot = {318.7070, 61.5270, 253.1800, 536.312866};
+
 
     std::string baseObjects = "res/objects/";
 
-    Planet Mercury((baseObjects + "mercury/mercury.glb").c_str(), mercuryParams, mercuryDerivs, mercuryRots);
-    Planet Venus((baseObjects + "venus/venus.glb").c_str(), venusParams, venusDerivs, venusRots);
-    Planet Earth((baseObjects + "earth/earth.glb").c_str(), earthParams, earthDerivs, earthRots);
-    Planet Mars((baseObjects + "mars/mars.glb").c_str(), marsParams, marsDerivs, marsRots);
-    Planet Jupiter((baseObjects + "jupiter/jupiter.glb").c_str(), jupiterParams, jupDerivs, jupRots);
-    Planet Saturn((baseObjects + "saturn/saturn.glb").c_str(), saturnParams, satDerivs, satRots);
-    Planet Uranus((baseObjects + "uranus/uranus.glb").c_str(), uranusParams, uranDerivs, uranRots);
-    Planet Neptune((baseObjects + "neptune/neptune.glb").c_str(), neptuneParams, neptDerivs, neptRots);
+    Planet Mercury((baseObjects + "mercury/mercury.glb").c_str(), mercuryParams, mercuryDerivs, mercuryRot);
+    Planet Venus((baseObjects + "venus/venus.glb").c_str(), venusParams, venusDerivs, venusRot);
+    Planet Earth((baseObjects + "earth/earth.glb").c_str(), earthParams, earthDerivs, earthRot);
+    Planet Mars((baseObjects + "mars/mars.glb").c_str(), marsParams, marsDerivs, marsRot);
+    Planet Jupiter((baseObjects + "jupiter/jupiter.glb").c_str(), jupiterParams, jupDerivs, jupRot);
+    Planet Saturn((baseObjects + "saturn/saturn.glb").c_str(), saturnParams, satDerivs, satRot);
+    Planet Uranus((baseObjects + "uranus/uranus.glb").c_str(), uranusParams, uranDerivs, uranRot);
+    Planet Neptune((baseObjects + "neptune/neptune.glb").c_str(), neptuneParams, neptDerivs, neptRot);
 
     Object Sun((baseObjects + "sun/sun.glb").c_str());
     
@@ -379,35 +380,35 @@ int main(int argc, char **argv) {
 
         Mercury.calcMeanAnom(timeReal);
         Mercury.solveEccAnom(timeReal);
-        Mercury.update(timeReal);
+        Mercury.update(timeReal, camera.Position);
 
         Venus.calcMeanAnom(timeReal);
         Venus.solveEccAnom(timeReal);
-        Venus.update(timeReal);
+        Venus.update(timeReal, camera.Position);
 
         Earth.calcMeanAnom(timeReal);
         Earth.solveEccAnom(timeReal);
-        Earth.update(timeReal);
+        Earth.update(timeReal, camera.Position);
 
         Mars.calcMeanAnom(timeReal);
         Mars.solveEccAnom(timeReal);
-        Mars.update(timeReal);
+        Mars.update(timeReal, camera.Position);
 
         Jupiter.calcMeanAnom(timeReal);
         Jupiter.solveEccAnom(timeReal);
-        Jupiter.update(timeReal);
+        Jupiter.update(timeReal, camera.Position);
         
         Saturn.calcMeanAnom(timeReal);
         Saturn.solveEccAnom(timeReal);
-        Saturn.update(timeReal);
+        Saturn.update(timeReal, camera.Position);
 
         Uranus.calcMeanAnom(timeReal);
         Uranus.solveEccAnom(timeReal);
-        Uranus.update(timeReal);
+        Uranus.update(timeReal, camera.Position);
 
         Neptune.calcMeanAnom(timeReal);
         Neptune.solveEccAnom(timeReal);
-        Neptune.update(timeReal);
+        Neptune.update(timeReal, camera.Position);
 
         // glm::mat4 proj;
         // proj = glm::perspective(
@@ -419,11 +420,19 @@ int main(int argc, char **argv) {
 
         glm::mat4 proj = glm::mat4(0.0f);
         {
-            float n = 0.1;
+            float n = 0.000000000001f;
             float r = n * tan(glm::radians(camera.Zoom));
             float t = r * (float)HEIGHT/WIDTH;
-            proj[0][0] = n / r; proj[1][1] = n / t; proj[2][2] = -1; proj[2][3] = -1; proj[3][2] = -2 * n;
+            proj[0][0] = n / r; proj[1][1] = n / t; proj[2][2] = 0; proj[2][3] = -1.0f; proj[3][2] = n;
         }
+
+        glm::dvec3 sunRelPos = glm::dvec3(0, 0, 0) - camera.Position;
+        float sunDist = glm::length(sunRelPos);
+        double sunMinVisualRadius = sunDist * 0.005f;
+        float sunCurrentScale = std::max(0.00465479256, sunMinVisualRadius);
+        Sun.setPosition(glm::vec3(sunRelPos));
+        Sun.setScale(glm::vec3(sunCurrentScale));
+        Sun.updateModelMatrix();
 
         if (curves) {
             Mercury.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
@@ -446,8 +455,12 @@ int main(int argc, char **argv) {
         ImGui::Text("Camera pos: X: %.2f, Y: %.2f, Z: %.2f", camera.Position.x, camera.Position.y, camera.Position.z);
         ImGui::Text("Camera rot: X: %.2f, Y: %.2f, Z: %.2f", camera.Front.x, camera.Front.y, camera.Front.z);
         ImGui::Text("Pitch: %.2f Yaw: %.2f", camera.Pitch, camera.Yaw);
-        ImGui::SliderFloat("Speed", speed, 500, 10000);
-        ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
+        double minSpeed = 1e-10;
+        double maxSpeed = 30;
+        ImGui::SliderScalar("Speed", ImGuiDataType_Double, speed, &minSpeed, &maxSpeed, "%.10f");
+        double minFOV = 1;
+        double maxFOV = 89;
+        ImGui::SliderScalar("Camera FOV", ImGuiDataType_Double, camFOV, &minFOV, &maxFOV, "%.10f");
         ImGui::Checkbox("Draw Curves?", &curves);
         ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
@@ -464,7 +477,9 @@ int main(int argc, char **argv) {
         ImGui::Text("Current Global Time: %s", display_str.c_str());
         // ImGui::SliderFloat("Semi-major axis", &Earth.semiMaj, 0.1, 50);
         // ImGui::SliderFloat("Eccentricity", &Earth.ecc, 0.0f, 1.0f);
-        ImGui::SliderFloat("Exponential Time Multiplier", &timeMultiplier, -10, 10);
+        double minMult = -10;
+        double maxMult = 10;
+        ImGui::SliderScalar("Exponential Time Multiplier", ImGuiDataType_Double, &timeMultiplier, &minMult, &maxMult, "%.10f");
         ImGui::Text("Actual Time Multiplier: %f", (signbit(timeMultiplier) ? -1 : 1) * pow(fabs(timeMultiplier), 7.30103));
         ImGui::Separator();
         ImGui::ColorEdit3("Light color", cols);

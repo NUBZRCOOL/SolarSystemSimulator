@@ -7,12 +7,16 @@ in vec3 FragPos;
 
 in float vLogDepth;
 
+in vec3 LocalPos;
+
 uniform sampler2D texture_diffuse1;
 uniform sampler2D texture_specular1;
 uniform vec3 objCol;
 uniform vec3 lightCol;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
+
+uniform float pointIntensity;
 
 void main() {
     float dist = length(lightPos - FragPos);
@@ -35,9 +39,25 @@ void main() {
     // diffuse *= atten;
     // specular *= atten;
 
-    vec3 result = (ambient + diffuse + specular);
+    vec3 result = (ambient + diffuse);
 
-    FragColor = vec4(result, 1.0);
+    ///////////
+    vec3 starColor = mix(texture(texture_diffuse1, TexCoord).rgb, vec3(1.0), 0.5);
+    vec3 finalCol = mix(result, starColor, pointIntensity);
+    //////////
 
-    // gl_FragDepth = 1.0 - (log2(vLogDepth + 1.0) / log2(1e12f + 1.0));
+    // float distToCenter = length(LocalPos);
+    // float glareMask = exp(-distToCenter * 4.0);
+    // vec3 starColor = mix(texture(texture_diffuse1, TexCoord).rgb, vec3(1.0), 0.95);
+    // vec3 glare = starColor * glareMask * 3.0;
+    // vec3 finalCol = mix(result, starColor * lightCol, pointIntensity);
+    // finalCol += (glare * pointIntensity * lightCol);
+
+    // float glareAlpha = exp(-distToCenter * 2.0); 
+    // float finalAlpha = mix(1.0, glareAlpha, pointIntensity);
+    // if (pointIntensity < 0.01) finalAlpha = 1.0;
+
+    FragColor = vec4(finalCol, 1.0);
+
+    gl_FragDepth = 1.0 - (log2(vLogDepth + 1.0) / log2(1e12f + 1.0));
 }

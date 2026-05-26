@@ -11,6 +11,8 @@ out vec3 FragPos;
 out float vLogDepth;
 const float C = 1.0f;
 
+out vec3 LocalPos;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
@@ -22,4 +24,6 @@ void main() {
     TexCoord = aTexCoord;
     Normal = mat3(transpose(inverse(model))) * aNormal;
     FragPos = vec3(model * vec4(vPos, 1.0));
+
+    LocalPos = vPos;
 }
