@@ -268,7 +268,6 @@ int main(int argc, char **argv) {
     OrbitalDerivatives mercuryDerivs = {0, 0.00002123, -0.00590158, 149472.67486623, 0.15940013, -0.12214182, 0, 0, 0, 0};
     RotationParameters mercuryRots = {318.4100, 82.9900, 329.5480, 6.138503};
 
-
     InitialParameters venusParams = {smallRadiusScale*4.04537843e-5, semiMajScale*0.72333566, 0.00677672, 3.39467605, 181.97909950, 131.60246718, 76.67984255};
     OrbitalDerivatives venusDerivs = {-0.00000026, -0.00005107, 0.00043494, 58517.81560260, 0.05679648, -0.27274174, 0, 0, 0, 0};
     RotationParameters venusRots = {30.1860, 88.7610, 160.2000, -1.481369};
@@ -298,7 +297,6 @@ int main(int argc, char **argv) {
     RotationParameters neptRots = {318.7070, 61.5270, 253.1800, 536.312866};
 
     std::string baseObjects = "res/objects/";
-
     Planet Mercury((baseObjects + "mercury/mercury.glb").c_str(), mercuryParams, mercuryDerivs, mercuryRots);
     Planet Venus((baseObjects + "venus/venus.glb").c_str(), venusParams, venusDerivs, venusRots);
     Planet Earth((baseObjects + "earth/earth.glb").c_str(), earthParams, earthDerivs, earthRots);
@@ -307,12 +305,10 @@ int main(int argc, char **argv) {
     Planet Saturn((baseObjects + "saturn/saturn.glb").c_str(), saturnParams, satDerivs, satRots);
     Planet Uranus((baseObjects + "uranus/uranus.glb").c_str(), uranusParams, uranDerivs, uranRots);
     Planet Neptune((baseObjects + "neptune/neptune.glb").c_str(), neptuneParams, neptDerivs, neptRots);
-
     Object Sun((baseObjects + "sun/sun.glb").c_str());
     
     
     std::string baseShaders = "res/shaders/";
-
     Shader curveShader(
         (baseShaders + "parametric/vertex.vs").c_str(),
         (baseShaders + "parametric/fragment.fs").c_str(),
@@ -330,6 +326,17 @@ int main(int argc, char **argv) {
     scene.add(Uranus.getPlanet());
     scene.add(Neptune.getPlanet());
     scene.add(Sun);
+
+    std::vector<std::tuple<std::string, Planet*>> planets = {
+        {"Mercury", &Mercury},
+        {"Venus", &Venus},
+        {"Earth", &Earth},
+        {"Mars", &Mars},
+        {"Jupiter", &Jupiter}, 
+        {"Saturn", &Saturn},
+        {"Uranus", &Uranus},
+        {"Neptune", &Neptune}
+    };
     
     Sun.setScale(glm::vec3(sunRadiusScale*0.00465479256));
 
@@ -377,38 +384,12 @@ int main(int argc, char **argv) {
         light.color = glm::vec3(cols[0], cols[1], cols[2]);
         light.position = Sun.getPosition();
 
-        Mercury.calcMeanAnom(timeReal);
-        Mercury.solveEccAnom(timeReal);
-        Mercury.update(timeReal);
-
-        Venus.calcMeanAnom(timeReal);
-        Venus.solveEccAnom(timeReal);
-        Venus.update(timeReal);
-
-        Earth.calcMeanAnom(timeReal);
-        Earth.solveEccAnom(timeReal);
-        Earth.update(timeReal);
-
-        Mars.calcMeanAnom(timeReal);
-        Mars.solveEccAnom(timeReal);
-        Mars.update(timeReal);
-
-        Jupiter.calcMeanAnom(timeReal);
-        Jupiter.solveEccAnom(timeReal);
-        Jupiter.update(timeReal);
-        
-        Saturn.calcMeanAnom(timeReal);
-        Saturn.solveEccAnom(timeReal);
-        Saturn.update(timeReal);
-
-        Uranus.calcMeanAnom(timeReal);
-        Uranus.solveEccAnom(timeReal);
-        Uranus.update(timeReal);
-
-        Neptune.calcMeanAnom(timeReal);
-        Neptune.solveEccAnom(timeReal);
-        Neptune.update(timeReal);
-
+        for (auto& [name, planet] : planets) {
+            planet->calcMeanAnom(timeReal);
+            planet->solveEccAnom(timeReal);
+            planet->update(timeReal);
+        }
+       
         // glm::mat4 proj;
         // proj = glm::perspective(
         //     glm::radians(camera.Zoom),
@@ -494,7 +475,7 @@ int main(int argc, char **argv) {
         }
         ImGui::Separator();
         ImGui::Text("Transform Controls");
-        if (ImGui::CollapsingHeader("Position", ImGuiTreeNodeFlags_DefaultOpen)) {
+        /*if (ImGui::CollapsingHeader("Position", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::PushItemWidth(500);
             if (ImGui::DragFloat3("Position", &objectPosition[0], 0.01f)) {
                 objects[selectedObjectIndex].get().setPosition(objectPosition);
@@ -504,7 +485,7 @@ int main(int argc, char **argv) {
                 objectPosition = glm::vec3(0.0f);
                 objects[selectedObjectIndex].get().setPosition(objectPosition);
             }
-        }
+        }*/
         ImGui::Separator();
         if (ImGui::CollapsingHeader("Scale", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::PushItemWidth(500);
@@ -522,7 +503,7 @@ int main(int argc, char **argv) {
                 objects[selectedObjectIndex].get().setScale(objectScale);
             }
         }
-        ImGui::Separator();
+        /*ImGui::Separator();
         if (ImGui::CollapsingHeader("Rotate", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::PushItemWidth(500);
             if (ImGui::DragFloat3("Rotate", &objectRotation[0], 0.5f)) {
@@ -533,6 +514,49 @@ int main(int argc, char **argv) {
                 objectRotation = glm::vec3(0.0f);
                 objects[selectedObjectIndex].get().setRotation(objectRotation);
             }
+        }*/
+
+
+        ImGui::End();
+
+       // Static variable to remember the current selection index
+        static int selectedPlanetIdx = 0; 
+
+        ImGui::Begin("Navigation Panel");
+
+        // Create a dropdown preview string based on selection
+        std::string previewValue = std::get<0>(planets[selectedPlanetIdx]);
+
+        if (ImGui::BeginCombo("Go To", previewValue.c_str())) {
+            for (int i = 0; i < planets.size(); i++) {
+                const bool isSelected = (selectedPlanetIdx == i);
+                
+                if (ImGui::Selectable(std::get<0>(planets[i]).c_str(), isSelected)) {
+                    selectedPlanetIdx = i;
+                    
+                    // Trigger the teleportation logic immediately upon click
+                    // Extract the pointer from the tuple (Index 1)
+                    Planet* p = std::get<1>(planets[selectedPlanetIdx]);
+                    
+                    // Safety check for null pointers
+                    if (!p) break; 
+
+                    // Assuming your Planet class has getPosition() and getRadius() methods:
+                    glm::vec3 planetPos = p->planet.getPosition();
+                    float radius = p->initParams.r;
+                    
+                    float safetyDistance = radius * 3.0f; 
+                    
+                    camera.setPosition(planetPos + glm::vec3(0.0f, radius, 0.0f));
+                    //camTarget = planetPos; 
+                }
+
+                // Set the initial focus when opening the combo
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
         }
         ImGui::End();
         ImGuiLayer::end();

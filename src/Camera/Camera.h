@@ -36,6 +36,7 @@ class Camera {
         void processKeys(CameraMovement direction, float deltaTime);
         void processMouse(float xOffset, float yOffset, GLboolean constrainPitch = true);
         void processScroll(float yOffset);
+        void setPosition(glm::vec3 pos);
 
     private:
 

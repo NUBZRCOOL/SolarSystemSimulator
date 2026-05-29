@@ -66,6 +66,11 @@ void Camera::processScroll(float yOffset) {
     }
 }
 
+void Camera::setPosition(glm::vec3 pos) {
+    Position = pos;
+    updateCamVectors();
+}
+
 void Camera::updateCamVectors() {
 
     glm::vec3 newFront;
