@@ -75,6 +75,10 @@ float semiMajScale = 1000;
 
 bool curves = true;
 
+static int selectedPlanetIdx = 0; 
+static bool followPlanet = false;
+static Planet* activeFollowPlanet = nullptr;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline time_t timegm(std::tm *tm) // calculate seconds without timezone
@@ -379,32 +383,45 @@ int main(int argc, char **argv) {
         }
         lastTime = curTime;
 
+        // 1. Advance Simulation Time
         timeReal += deltaTime * (signbit(timeMultiplier) ? -1 : 1) * pow(fabs(timeMultiplier), 7.30103);
         
         Input::update(deltaTime);
         Input::syncCursor();
+
+        // 2. Clear Buffers
         glClearColor(0, 0, 0, 1.0f);
         glDepthMask(GL_TRUE);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        light.color = glm::vec3(cols[0], cols[1], cols[2]);
-        light.position = Sun.getPosition();
-
+        // 3. Update Planets (Ensures physics are fresh for this frame)
         for (auto& [name, planet] : planets) {
             planet->calcMeanAnom(timeReal);
             planet->solveEccAnom(timeReal);
             planet->update(timeReal);
         }
-       
-        // glm::mat4 proj;
-        // proj = glm::perspective(
-        //     glm::radians(camera.Zoom),
-        //     (float)window.getWidth() / (float)window.getHeight(),
-        //     0.1f,
-        //     100000.0f
-        // );
 
+        // 4. Handle Deactivation of Camera Tracking via Input
+        if (followPlanet && 
+            (glfwGetKey(window.get(), GLFW_KEY_W) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_A) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_S) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_D) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_SPACE) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
+
+            followPlanet = false;
+            activeFollowPlanet = nullptr;
+        }
+
+        // 5. Update Camera Position (Glues camera to the freshly updated planet)
+        if (followPlanet && activeFollowPlanet) {
+            glm::vec3 planetPos = activeFollowPlanet->planet.getPosition();
+            float radius = activeFollowPlanet->initParams.r;
+            camera.setPosition(planetPos + glm::vec3(0.0f, 1.2f * radius, 0.0f));
+        }
+
+        // 6. Set Up Projection Matrix
         glm::mat4 proj = glm::mat4(0.0f);
         {
             float n = 0.1;
@@ -413,6 +430,7 @@ int main(int argc, char **argv) {
             proj[0][0] = n / r; proj[1][1] = n / t; proj[2][2] = -1; proj[2][3] = -1; proj[3][2] = -2 * n;
         }
 
+        // 7. Draw Orbital Curves
         if (curves) {
             Mercury.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
             Venus.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
@@ -424,15 +442,34 @@ int main(int argc, char **argv) {
             Neptune.drawCurve(curveShader, camera.getViewMat(), proj, glm::vec2(WIDTH, HEIGHT));
         }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        light.color = glm::vec3(cols[0], cols[1], cols[2]);
+        light.position = Sun.getPosition();
         
+        // 8. RENDER 3D SCENE HERE (Before ImGui)
         renderer.render(scene, camera, light, window.getWidth(), window.getHeight(), proj);
 
+        // 8.5 im lwk rendering the skybox ////////////////
         glDepthFunc(GL_LEQUAL);
-        glm::mat4 skyView = glm::mat4(glm::mat3(camera.getViewMat()));
-        skybox.render(skyboxShader, skyView, proj);
-        glDepthFunc(GL_LESS);
+        float tiltAngle = glm::radians(90.0f - earthRots.b0); 
 
+        // 2. The longitude of the pole
+        float longitude = glm::radians(earthRots.l0);
+
+        // 3. Build the transformation matrix
+        glm::mat4 rotation = glm::mat4(1.0f);
+
+        // First, rotate around Y to get to the correct longitude
+        rotation = glm::rotate(rotation, longitude, glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Second, rotate around X (or Z) to apply the axial tilt
+        rotation = glm::rotate(rotation, tiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 celestialView = glm::mat4(glm::mat3(camera.getViewMat()));
+        glm::mat4 eclipticView = celestialView * rotation;
+        skybox.render(skyboxShader, eclipticView, proj);
+        glDepthFunc(GL_LESS);
+        /////////////////////////////////////////////
+
+        // 9. Draw ImGui HUD on top of the 3D Scene
         ImGuiLayer::begin();
         ImGui::Begin("Debug");
         ImGui::Text("FPS: %.2f", fps);
@@ -531,41 +568,51 @@ int main(int argc, char **argv) {
 
         ImGui::End();
 
-        // Static variable to remember the current selection index
-        static int selectedPlanetIdx = 0; 
-        // Set a default window size so it isn't tiny
-        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
 
+        if (followPlanet && 
+            (glfwGetKey(window.get(), GLFW_KEY_W) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_A) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_S) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_D) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_SPACE) == GLFW_PRESS ||
+            glfwGetKey(window.get(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)) {
+
+            followPlanet = false;
+            activeFollowPlanet = nullptr;
+        }
+
+        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
         ImGui::Begin("Navigation Panel");
         ImGui::PushItemWidth(500.0f);
-        ImGui::Text("Select Destination:");
         ImGui::Separator();
 
-        // Make the list box take up the full available width (-1.0f) 
-        // and a specific height (e.g., 250 pixels)
+        ImGui::Checkbox("Follow Destination Planet", &followPlanet);
+        if (!followPlanet) {
+            activeFollowPlanet = nullptr; // Clear target if they uncheck it manually
+        }
+
         if (ImGui::BeginListBox("##PlanetList", ImVec2(-1.0f, 250.0f))) {
             
             for (int i = 0; i < planets.size(); i++) {
                 const bool isSelected = (selectedPlanetIdx == i);
                 std::string planetName = std::get<0>(planets[i]);
                 
-                // Render each planet as a selectable item
                 if (ImGui::Selectable(planetName.c_str(), isSelected)) {
                     selectedPlanetIdx = i;
                     
-                    // Trigger the teleportation logic immediately upon click
                     Planet* p = std::get<1>(planets[selectedPlanetIdx]);
                     
                     if (p) { 
                         glm::vec3 planetPos = p->planet.getPosition();
                         float radius = p->initParams.r;
+                        camera.setPosition(planetPos + glm::vec3(0.0f, 1.2 * radius, 0.0f));
                         
-                        camera.setPosition(planetPos + glm::vec3(0.0f, 2 * radius, 0.0f));
-                        //camTarget = planetPos; 
+                        if (followPlanet) {
+                            activeFollowPlanet = p;
+                        }
                     }
                 }
 
-                // Keep the active selection in view if the list scrolls
                 if (isSelected) {
                     ImGui::SetItemDefaultFocus();
                 }
@@ -574,10 +621,21 @@ int main(int argc, char **argv) {
         }
         ImGui::PopItemWidth();
         ImGui::End();
+
+        if (followPlanet && activeFollowPlanet) {
+            glm::vec3 planetPos = activeFollowPlanet->planet.getPosition();
+            float radius = activeFollowPlanet->initParams.r;
+            
+            camera.setPosition(planetPos + glm::vec3(0.0f, 1.2 * radius, 0.0f));
+        }
+
+
+
         ImGuiLayer::end();
         
         window.swapBuffers();
         window.pollEvents();
+        
     }
     
     ImPlot::DestroyContext();

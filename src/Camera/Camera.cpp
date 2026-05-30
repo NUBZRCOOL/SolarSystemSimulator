@@ -57,13 +57,20 @@ void Camera::processMouse(float xOffset, float yOffset, GLboolean constrainPitch
 }
 
 void Camera::processScroll(float yOffset) {
-    Zoom -= (float)yOffset;
-    if (Zoom < 1.0f) {
-        Zoom = 1.0f;
+    // Zoom -= (float)yOffset;
+    // if (Zoom < 1.0f) {
+    //     Zoom = 1.0f;
+    // }
+    // if (Zoom > 45.0f) {
+    //     Zoom = 45.0f;
+    // }
+    if (yOffset > 0) {
+        MovementSpeed *= 1.2f;
+    } else {
+        MovementSpeed /= 1.2f;
     }
-    if (Zoom > 45.0f) {
-        Zoom = 45.0f;
-    }
+    if (MovementSpeed < 0.01f) MovementSpeed = 0.01f;
+    if (MovementSpeed > 50000.0f) MovementSpeed = 50000.0f; 
 }
 
 void Camera::setPosition(glm::vec3 pos) {
