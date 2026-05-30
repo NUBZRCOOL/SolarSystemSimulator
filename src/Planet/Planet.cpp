@@ -140,4 +140,5 @@ void Planet::drawCurve(Shader& curveShader, glm::mat4 viewMat, glm::mat4 proj, g
     curve.init(0, 2 * AI_MATH_PI_F, 100);
     curve.updateCurve(getP());
     curve.render(curveShader, viewMat, proj, 2.0, aspect);
+    curve.freeBuffer();
 }

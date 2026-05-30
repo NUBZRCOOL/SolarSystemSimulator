@@ -20,6 +20,11 @@ void ParametricCurve::init(float tStart, float tEnd, int segments) {
     glBindVertexArray(0);
 }
 
+void ParametricCurve::freeBuffer() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+}
+
 void ParametricCurve::render(Shader &shader, glm::mat4 view, glm::mat4 proj, float lineWidth, glm::vec2 viewportSize) {
     
     if (vertices.empty()) return;

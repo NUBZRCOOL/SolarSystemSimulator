@@ -21,8 +21,11 @@ Texture::Texture(const std::string &filePath)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_Width, m_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_LocalBuffer);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, 0);
+        stbi_image_free(m_LocalBuffer);
+        m_LocalBuffer = nullptr;
     } else {
         std::cout << "FAILED TO LOAD TEXTURE" << std::endl;
+        stbi_image_free(m_LocalBuffer);
     }
 
     if (m_LocalBuffer) stbi_image_free(m_LocalBuffer);
