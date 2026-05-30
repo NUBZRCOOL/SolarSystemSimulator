@@ -22,6 +22,7 @@
 #include "Renderer/Renderer.h"
 #include "ParametricCurve/ParametricCurve.h"
 #include "Planet/Planet.h"
+#include "Skybox/Skybox.h"
 
 #define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
@@ -315,6 +316,12 @@ int main(int argc, char **argv) {
         (baseShaders + "parametric/geometry.gs").c_str()
     );
 
+    Shader skyboxShader(
+        (baseShaders + "skybox/skybox.vs").c_str(),
+        (baseShaders + "skybox/skybox.fs").c_str()
+    );
+    Skybox skybox("res/textures/skybox/");
+
 
     Scene scene;
     scene.add(Mercury.getPlanet());
@@ -420,6 +427,11 @@ int main(int argc, char **argv) {
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         renderer.render(scene, camera, light, window.getWidth(), window.getHeight(), proj);
+
+        glDepthFunc(GL_LEQUAL);
+        glm::mat4 skyView = glm::mat4(glm::mat3(camera.getViewMat()));
+        skybox.render(skyboxShader, skyView, proj);
+        glDepthFunc(GL_LESS);
 
         ImGuiLayer::begin();
         ImGui::Begin("Debug");

@@ -27,6 +27,7 @@
                 "${workspaceFolder}/src/Renderer/*.cpp",
                 "${workspaceFolder}/src/ParametricCurve/*.cpp",
                 "${workspaceFolder}/src/Planet/*.cpp",
+                "${workspaceFolder}/src/Skybox/*.cpp",
                 "-lglfw3dll",
                 "-lassimpdll",
                 "-o",
