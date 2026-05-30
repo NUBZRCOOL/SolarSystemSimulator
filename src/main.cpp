@@ -519,45 +519,48 @@ int main(int argc, char **argv) {
 
         ImGui::End();
 
-       // Static variable to remember the current selection index
+        // Static variable to remember the current selection index
         static int selectedPlanetIdx = 0; 
+        // Set a default window size so it isn't tiny
+        ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
 
         ImGui::Begin("Navigation Panel");
+        ImGui::PushItemWidth(500.0f);
+        ImGui::Text("Select Destination:");
+        ImGui::Separator();
 
-        // Create a dropdown preview string based on selection
-        std::string previewValue = std::get<0>(planets[selectedPlanetIdx]);
-
-        if (ImGui::BeginCombo("Go To", previewValue.c_str())) {
+        // Make the list box take up the full available width (-1.0f) 
+        // and a specific height (e.g., 250 pixels)
+        if (ImGui::BeginListBox("##PlanetList", ImVec2(-1.0f, 250.0f))) {
+            
             for (int i = 0; i < planets.size(); i++) {
                 const bool isSelected = (selectedPlanetIdx == i);
+                std::string planetName = std::get<0>(planets[i]);
                 
-                if (ImGui::Selectable(std::get<0>(planets[i]).c_str(), isSelected)) {
+                // Render each planet as a selectable item
+                if (ImGui::Selectable(planetName.c_str(), isSelected)) {
                     selectedPlanetIdx = i;
                     
                     // Trigger the teleportation logic immediately upon click
-                    // Extract the pointer from the tuple (Index 1)
                     Planet* p = std::get<1>(planets[selectedPlanetIdx]);
                     
-                    // Safety check for null pointers
-                    if (!p) break; 
-
-                    // Assuming your Planet class has getPosition() and getRadius() methods:
-                    glm::vec3 planetPos = p->planet.getPosition();
-                    float radius = p->initParams.r;
-                    
-                    float safetyDistance = radius * 3.0f; 
-                    
-                    camera.setPosition(planetPos + glm::vec3(0.0f, radius, 0.0f));
-                    //camTarget = planetPos; 
+                    if (p) { 
+                        glm::vec3 planetPos = p->planet.getPosition();
+                        float radius = p->initParams.r;
+                        
+                        camera.setPosition(planetPos + glm::vec3(0.0f, 2 * radius, 0.0f));
+                        //camTarget = planetPos; 
+                    }
                 }
 
-                // Set the initial focus when opening the combo
+                // Keep the active selection in view if the list scrolls
                 if (isSelected) {
                     ImGui::SetItemDefaultFocus();
                 }
             }
-            ImGui::EndCombo();
+            ImGui::EndListBox();
         }
+        ImGui::PopItemWidth();
         ImGui::End();
         ImGuiLayer::end();
         
