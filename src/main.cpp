@@ -79,6 +79,8 @@ static int selectedPlanetIdx = 0;
 static bool followPlanet = false;
 static Planet* activeFollowPlanet = nullptr;
 
+bool showConstellations = false;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 inline time_t timegm(std::tm *tm) // calculate seconds without timezone
@@ -324,7 +326,8 @@ int main(int argc, char **argv) {
         (baseShaders + "skybox/skybox.vs").c_str(),
         (baseShaders + "skybox/skybox.fs").c_str()
     );
-    Skybox skybox("res/textures/skybox/");
+    Skybox skybox("res/textures/skybox/stars/");
+    Skybox constSkybox("res/textures/skybox/constellations/");
 
 
     Scene scene;
@@ -450,22 +453,16 @@ int main(int argc, char **argv) {
 
         // 8.5 im lwk rendering the skybox ////////////////
         glDepthFunc(GL_LEQUAL);
-        float tiltAngle = glm::radians(90.0f - earthRots.b0); 
-
-        // 2. The longitude of the pole
-        float longitude = glm::radians(earthRots.l0);
-
-        // 3. Build the transformation matrix
-        glm::mat4 rotation = glm::mat4(1.0f);
-
-        // First, rotate around Y to get to the correct longitude
-        rotation = glm::rotate(rotation, longitude, glm::vec3(0.0f, 1.0f, 0.0f));
-
-        // Second, rotate around X (or Z) to apply the axial tilt
-        rotation = glm::rotate(rotation, tiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-        glm::mat4 celestialView = glm::mat4(glm::mat3(camera.getViewMat()));
-        glm::mat4 eclipticView = celestialView * rotation;
-        skybox.render(skyboxShader, eclipticView, proj);
+        glm::mat4 view = glm::mat4(glm::mat3(camera.getViewMat()));
+        glm::mat4 skyboxRotation = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+        skyboxRotation = glm::rotate(skyboxRotation, glm::radians(270.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        skyboxRotation = glm::rotate(skyboxRotation, glm::radians(90.0f - (float)earthRots.b0), glm::vec3(0.0f, 0.0f, 1.0f));
+        view = view * skyboxRotation;
+        if (!showConstellations) {
+            skybox.render(skyboxShader, view, proj);
+        } else {
+            constSkybox.render(skyboxShader, view, proj);
+        }
         glDepthFunc(GL_LESS);
         /////////////////////////////////////////////
 
@@ -479,6 +476,8 @@ int main(int argc, char **argv) {
         ImGui::SliderFloat("Speed", speed, 500, 10000);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
         ImGui::Checkbox("Draw Curves?", &curves);
+        ImGui::Checkbox("Show constellations: ", &showConstellations);
+        ImGui::Separator();
         ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
         ImGui::Separator();
