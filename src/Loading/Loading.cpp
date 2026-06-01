@@ -69,7 +69,7 @@ void LoadingScreen::render() {
     glBindVertexArray(VAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texID);
-    shader.setInt("texture", 0);
+    shader.setInt("aTexture", 0);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     
     glEnable(GL_DEPTH_TEST);
