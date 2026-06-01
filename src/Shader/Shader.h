@@ -19,6 +19,7 @@ class Shader {
         
 
         Shader(const char* vPath, const char *fPath, const char *gPath = nullptr);
+        Shader() {};
         
         void use();
 

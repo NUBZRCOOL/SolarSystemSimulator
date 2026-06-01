@@ -28,6 +28,7 @@
                 "${workspaceFolder}/src/ParametricCurve/*.cpp",
                 "${workspaceFolder}/src/Planet/*.cpp",
                 "${workspaceFolder}/src/Skybox/*.cpp",
+                "${workspaceFolder}/src/Loading/*.cpp",
                 "-lglfw3dll",
                 "-lassimpdll",
                 "-o",

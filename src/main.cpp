@@ -1,3 +1,6 @@
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -23,16 +26,12 @@
 #include "ParametricCurve/ParametricCurve.h"
 #include "Planet/Planet.h"
 #include "Skybox/Skybox.h"
+#include "Misc/Misc.h"
+#include "Loading/Loading.h"
 
 #define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 
 
-struct DatePickerState {
-    bool is_initialized = false;
-    std::tm stored_tm = {};   // Track calendar components cleanly
-    double stored_ms = 0.0;   // Track precise sub-seconds
-    int picker_level = 0;
-};
 
 
 int WIDTH = 1920;
@@ -79,195 +78,30 @@ static int selectedPlanetIdx = 0;
 static bool followPlanet = false;
 static Planet* activeFollowPlanet = nullptr;
 
+bool showSky = true;
 bool showConstellations = false;
+bool showConstBounds = false;
+bool showGrid = false;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+int timezoneOffsetHours = 0;
 
-inline time_t timegm(std::tm *tm) // calculate seconds without timezone
-{
-#ifdef _WIN32
-    return _mkgmtime(tm);
-#else
-    return timegm(tm);
-#endif
-}
 
-double StringToTimestamp(const std::string& datetime_str) {
-    std::tm tm = {};
-    std::stringstream ss(datetime_str);
-    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-    
-    std::time_t s = timegm(&tm);
-    double ms = 0.0;
-    
-    size_t dot = datetime_str.find_first_of('.');
-    if (dot != std::string::npos) {
-        ms = std::stod("0." + datetime_str.substr(dot + 1));
-    }
-    return static_cast<double>(s) + ms;
-}
-
-// Formats Unix timestamp back to UTC string 
-std::string TimestampToString(double t) {
-    std::time_t s = static_cast<std::time_t>(t);
-    int ms = static_cast<int>(std::round((t - s) * 1000.0));
-    if (ms >= 1000) { s += 1; ms -= 1000; } // Handle rounding overflows
-    
-    std::tm *tm = std::gmtime(&s);
-    char buffer[80];
-    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm);
-    
-    std::stringstream ss;
-    ss << buffer << "." << std::setw(3) << std::setfill('0') << ms;
-    return ss.str();
-}
-
-void ImPlot_DateTimePicker(const char* popup_id, double& current_unix_time, int timezone_offset_hours) {
-    if (ImGui::BeginPopup(popup_id)) {
-        
-        // Use a clean, simple static state container that mirrors standard GUI logic
-        static bool is_initialized = false;
-        static int sel_year = 2000, sel_month = 0, sel_day = 1;
-        static int sel_hour = 0, sel_min = 0, sel_sec = 0;
-        static int sel_ms = 0;
-
-        // 1. First frame layout sync
-        if (!is_initialized) {
-            double local_time = current_unix_time + (timezone_offset_hours * 3600.0);
-            std::time_t full_s = static_cast<std::time_t>(std::floor(local_time));
-            double sub_seconds = local_time - full_s;
-            
-            std::tm* tm_local = std::gmtime(&full_s);
-            if (tm_local) {
-                sel_year  = tm_local->tm_year + 1900;
-                sel_month = tm_local->tm_mon; // 0-11
-                sel_day   = tm_local->tm_mday;
-                sel_hour  = tm_local->tm_hour;
-                sel_min   = tm_local->tm_min;
-                sel_sec   = tm_local->tm_sec;
-                sel_ms    = static_cast<int>(sub_seconds * 1000.0 + 0.5);
-            }
-            is_initialized = true;
-        }
-
-        // 2. NATIVE IMGUI MONTH & YEAR PICKERS (Guaranteed not to freeze or snap back)
-        ImGui::Text("Date Selection");
-        
-        // Year Input
-        ImGui::PushItemWidth(6 * ImGui::GetFontSize());
-        ImGui::InputInt("##year_input", &sel_year, 1, 10);
-        if (sel_year < 1) sel_year = 1;
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-
-        // Month Dropdown
-        const char* months[] = { "January", "February", "March", "April", "May", "June", 
-                                 "July", "August", "September", "October", "November", "December" };
-        ImGui::PushItemWidth(8 * ImGui::GetFontSize());
-        if (ImGui::BeginCombo("##month_combo", months[sel_month])) {
-            for (int i = 0; i < 12; i++) {
-                bool is_selected = (sel_month == i);
-                if (ImGui::Selectable(months[i], is_selected)) {
-                    sel_month = i;
-                }
-            }
-            ImGui::EndCombo();
-        }
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-
-        // Day Input
-        // Calculate max days allowed in the chosen month
-        std::tm days_lookup = {};
-        days_lookup.tm_year = sel_year - 1900;
-        days_lookup.tm_mon = sel_month + 1; // Next month
-        days_lookup.tm_mday = 0;            // Day 0 of next month = Last day of current month
-        timegm(&days_lookup);
-        int max_days = days_lookup.tm_mday;
-
-        ImGui::PushItemWidth(4 * ImGui::GetFontSize());
-        ImGui::InputInt("##day_input", &sel_day, 1, 5);
-        if (sel_day < 1) sel_day = 1;
-        if (sel_day > max_days) sel_day = max_days;
-        ImGui::PopItemWidth();
-
-        ImGui::Separator();
-
-        // 3. TIME PICKER
-        ImGui::Text("Time Selection");
-        
-        // Construct temporary frame structure to feed ImPlot's visual clock interface safely
-        std::tm frame_tm = {};
-        frame_tm.tm_year = sel_year - 1900;
-        frame_tm.tm_mon  = sel_month;
-        frame_tm.tm_mday = sel_day;
-        frame_tm.tm_hour = sel_hour;
-        frame_tm.tm_min  = sel_min;
-        frame_tm.tm_sec  = sel_sec;
-        
-        ImPlotTime im_time = ImPlotTime::FromDouble(static_cast<double>(timegm(&frame_tm)) + (sel_ms / 1000.0));
-        ImPlot::GetStyle().Use24HourClock = true;
-        
-        if (ImPlot::ShowTimePicker("##time", &im_time)) {
-            double t_val = im_time.ToDouble();
-            std::time_t t_secs = static_cast<std::time_t>(std::floor(t_val));
-            std::tm* decoded = std::gmtime(&t_secs);
-            if (decoded) {
-                sel_hour = decoded->tm_hour;
-                sel_min  = decoded->tm_min;
-                sel_sec  = decoded->tm_sec;
-            }
-        }
-
-        // Millisecond precision sub-slider
-        ImGui::SameLine(); ImGui::Text("."); ImGui::SameLine();
-        ImGui::PushItemWidth(4 * ImGui::GetFontSize());
-        if (ImGui::InputInt("##ms", &sel_ms, 0, 0)) {
-            if (sel_ms < 0) sel_ms = 0;
-            if (sel_ms > 999) sel_ms = 999;
-        }
-        ImGui::PopItemWidth();
-
-        ImGui::Separator();
-
-        // 4. DIALOG PROCESSING BUTTONS
-        if (ImGui::Button("OK", ImVec2(120, 0))) {
-            std::tm final_tm = {};
-            final_tm.tm_year = sel_year - 1900;
-            final_tm.tm_mon  = sel_month;
-            final_tm.tm_mday = sel_day;
-            final_tm.tm_hour = sel_hour;
-            final_tm.tm_min  = sel_min;
-            final_tm.tm_sec  = sel_sec;
-
-            std::time_t final_secs = timegm(&final_tm);
-            double final_local_time = static_cast<double>(final_secs) + (sel_ms / 1000.0);
-            
-            // Adjust back to global simulation time scale removing local offset configuration
-            current_unix_time = final_local_time - (timezone_offset_hours * 3600.0);
-            
-            is_initialized = false; // Reset setup trigger flag for subsequent popup clicks
-            ImGui::CloseCurrentPopup();
-        }
-        
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-            is_initialized = false; // Discard changes cleanly
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
-    }
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char **argv) {
 
     Window window(WIDTH, HEIGHT, "Solar System Simulation");
 
+    Shader loadShader("res/shaders/loading/loading.vs", "res/shaders/loading/loading.fs");
+    LoadingScreen loader;
+    loader.init(WIDTH, HEIGHT, "res/textures/loading/loading.png", loadShader);
+
+    loader.render();
+
     Input::init(window.get(), &camera);
     ImGuiLayer::init(window.get());
     ImGuiLayer::setFontScale(2.0f);
+
+    loader.render();
 
     float cols[] = {0.862745098039, 0.596078431373, 0.2};
 
@@ -305,14 +139,23 @@ int main(int argc, char **argv) {
 
     std::string baseObjects = "res/objects/";
     Planet Mercury((baseObjects + "mercury/mercury.glb").c_str(), mercuryParams, mercuryDerivs, mercuryRots);
+    loader.render();
     Planet Venus((baseObjects + "venus/venus.glb").c_str(), venusParams, venusDerivs, venusRots);
+    loader.render();
     Planet Earth((baseObjects + "earth/earth.glb").c_str(), earthParams, earthDerivs, earthRots);
+    loader.render();
     Planet Mars((baseObjects + "mars/mars.glb").c_str(), marsParams, marsDerivs, marsRots);
+    loader.render();
     Planet Jupiter((baseObjects + "jupiter/jupiter.glb").c_str(), jupiterParams, jupDerivs, jupRots);
+    loader.render();
     Planet Saturn((baseObjects + "saturn/saturn.glb").c_str(), saturnParams, satDerivs, satRots);
+    loader.render();
     Planet Uranus((baseObjects + "uranus/uranus.glb").c_str(), uranusParams, uranDerivs, uranRots);
+    loader.render();
     Planet Neptune((baseObjects + "neptune/neptune.glb").c_str(), neptuneParams, neptDerivs, neptRots);
+    loader.render();
     Object Sun((baseObjects + "sun/sun.glb").c_str());
+    loader.render();
     
     
     std::string baseShaders = "res/shaders/";
@@ -321,13 +164,22 @@ int main(int argc, char **argv) {
         (baseShaders + "parametric/fragment.fs").c_str(),
         (baseShaders + "parametric/geometry.gs").c_str()
     );
-
+    loader.render();
+    
     Shader skyboxShader(
         (baseShaders + "skybox/skybox.vs").c_str(),
         (baseShaders + "skybox/skybox.fs").c_str()
     );
+    loader.render();
+
     Skybox skybox("res/textures/skybox/stars/");
+    loader.render();
     Skybox constSkybox("res/textures/skybox/constellations/");
+    loader.render();
+    Skybox constBounds("res/textures/skybox/bounds/");
+    loader.render();
+    Skybox skyGrid("res/textures/skybox/grid/");
+    loader.render();
 
 
     Scene scene;
@@ -370,6 +222,7 @@ int main(int argc, char **argv) {
 
     auto now = std::chrono::system_clock::now();
     timeReal = (double)std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+    timezoneOffsetHours = GetSystemTimezoneOffset();
 
     ImPlot::CreateContext();
     
@@ -458,11 +311,24 @@ int main(int argc, char **argv) {
         skyboxRotation = glm::rotate(skyboxRotation, glm::radians(270.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         skyboxRotation = glm::rotate(skyboxRotation, glm::radians(90.0f - (float)earthRots.b0), glm::vec3(0.0f, 0.0f, 1.0f));
         view = view * skyboxRotation;
-        if (!showConstellations) {
-            skybox.render(skyboxShader, view, proj);
-        } else {
+        
+        if (showSky) skybox.render(skyboxShader, view, proj);
+        if (showConstellations) {
+            glBlendFunc(GL_ONE, GL_ONE);
             constSkybox.render(skyboxShader, view, proj);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
+        if (showConstBounds) {
+            glBlendFunc(GL_ONE, GL_ONE);
+            constBounds.render(skyboxShader, view, proj);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        if (showGrid) {
+            glBlendFunc(GL_ONE, GL_ONE);
+            skyGrid.render(skyboxShader, view, proj);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+
         glDepthFunc(GL_LESS);
         /////////////////////////////////////////////
 
@@ -476,7 +342,13 @@ int main(int argc, char **argv) {
         ImGui::SliderFloat("Speed", speed, 500, 10000);
         ImGui::SliderFloat("Camera FOV", camFOV, 1, 89);
         ImGui::Checkbox("Draw Curves?", &curves);
-        ImGui::Checkbox("Show constellations: ", &showConstellations);
+        ImGui::Separator();
+        if (ImGui::CollapsingHeader("Skybox options")) {
+            ImGui::Checkbox("Show sky", &showSky);
+            ImGui::Checkbox("Show constellations", &showConstellations);
+            ImGui::Checkbox("Show constellation boundaries", &showConstBounds);
+            ImGui::Checkbox("Show grid", &showGrid);
+        }
         ImGui::Separator();
         ImGui::Text("Time (s): %f", timeReal);
         // ImGui::Checkbox("Cross-view", &crossView);
@@ -486,10 +358,10 @@ int main(int argc, char **argv) {
         }
 
         // Pass context safely into the picker loop
-        ImPlot_DateTimePicker("SelectDateTime", timeReal, -7);
+        ImPlot_DateTimePicker("SelectDateTime", timeReal, timezoneOffsetHours);
 
         // Print out current synchronized timestamp to screen
-        std::string display_str = TimestampToString(timeReal);
+        std::string display_str = TimestampToString(timeReal, timezoneOffsetHours);
         ImGui::Text("Current Global Time: %s", display_str.c_str());
         // ImGui::SliderFloat("Semi-major axis", &Earth.semiMaj, 0.1, 50);
         // ImGui::SliderFloat("Eccentricity", &Earth.ecc, 0.0f, 1.0f);
